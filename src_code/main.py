@@ -21,7 +21,7 @@ if __name__ == "__main__":
     if mode == 0:
 
         # initialize the game
-        game = game()
+        game = game(policy=None, screen_width=90, screen_height=90, step=2.5, delay=0.2)
         wn = game.create_environment()
         # Keyboard bindings
         wn.listen()
@@ -46,6 +46,11 @@ if __name__ == "__main__":
                 sys.exit()
 
         policy = agent.policy
-        game = game(policy)
+        game = game(policy, step=10, delay=0.5)
+        wn = game.create_environment()
+        game.play()
+
+    elif mode == 2:
+        game = game(step=3, delay=0.2, model_path='qlearn_snake_model.pt')
         wn = game.create_environment()
         game.play()

@@ -10,8 +10,6 @@ plt.rcParams['font.size'] = 6
 
 
 
-
-
 class GridWorldEnv():
     def __init__(self, Lx, Ly, start = None, end = None):
         
@@ -68,7 +66,7 @@ class GridWorldEnv():
         Evolves the environment given action A and current state.
         """
         # Check if action A is in proper set
-        assert A in np.array([[1,0],[0,1],[-1,0],[0,-1]])
+        assert A in np.array([[1,0],[0,1],[-1,0],[0,-1]]) #[Down,   Up,  Right,Left]
         S = self.current_state
         S_new = S + A
 
@@ -94,15 +92,15 @@ class GridWorldEnv():
             
         return S_new, reward, self.done
 
-    def learn_policies(self):
+    def learn_policies(self, save=True):
+        """
+        Learn final policies running QLearning algorithm for
+        a suitable number of episodes
+        """
         
         # for each possible position of the reward
         for i in range(self.Ly):
             for j in range(self.Lx):
-            
-                policy = np.zeros( (self.Ly, self.Lx, len(self.actions)) )
-                policy[:,:] = [1/len(self.actions)]*len(self.actions)
-
 
                 # set the reward position
                 self.end = np.array([i,j])
@@ -140,7 +138,6 @@ class GridWorldEnv():
                         a = new_a
                         s = new_s
 
-
                 self.policy[:,:,i*self.Ly+j] = QLearning.greedy_policy().astype(int)    
 
                 for m in range(self.Ly):
@@ -150,10 +147,59 @@ class GridWorldEnv():
             print('Policy for initial state [*,{}] and final state is saved'.format(i))
 
         # save the policy and values in pickle file
-        with open('policy.pkl', 'wb') as f:
-            pickle.dump(self, f)
+        if save:
+            with open('policy.pkl', 'wb') as f:
+                pickle.dump(self, f)
+
+        
+    def get_qvalues(self, qlearn, n_episodes, end, start=None):
+        """
+        Get the Qvalues resulting from the execution of Qlearning algorithm for a 
+        given starting point and an end point, run for a small number of episodes.
+        
+        """
+
+        # set the reward position
+        self.end = np.array([end[0], end[1]])
+
+        if start is None:
+            # choose as starting position one which is far from the reward
+            self.start = self.end + np.array([self.Ly//2, self.Lx//2])
+        else:
+            self.start = start
+        self.start[0] = self.start[0] % self.Ly
+        self.start[1] = self.start[1] % self.Lx
         
         
+
+        for _ in range(n_episodes):
+            done = False
+
+            # reset the environment
+            self.reset()
+
+            s = self.current_state
+            a = qlearn.get_action_epsilon_greedy(s, self.epsilon)
+            act = self.actions[a]
+            
+            while not done:
+                # Evolve one step
+                new_s, r, done = self.step(act)
+                                            
+                # Choose new action index
+                new_a = qlearn.get_action_epsilon_greedy(new_s, self.epsilon)
+                #print(s,act,a, r,new_s,new_a, done, ' Qvalue ', SARSA.Qvalues[(*s,)])
+                # (Corresponding action to index)
+                act = self.actions[new_a]
+                # Single update with (S, A, R', S')
+                qlearn.single_step_update(s, a, r, new_s, done)
+                
+                a = new_a
+                s = new_s
+
+        return qlearn
+        
+
     def render(self):
         Ly, Lx = self.World.shape
 

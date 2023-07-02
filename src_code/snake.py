@@ -4,27 +4,28 @@ import random
 import sys
 import pickle
 from qlearning import *
-
+from qnetworks import *
+import torch
 
 
 
 class game():
 
-    def __init__(self, policy=None):
+    def __init__(self, policy=None, model_path=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
 
-        self.delay = 0.5
+        self.delay = delay
         self.score = 0
         self.high_score = 0
-        self.step = 10
+        self.step = step
         self.started = False
         self.reward_idx = 20 # initial random reward position
 
-        self.border_size = -5
+        self.border_size = border_size
         self.game_width = 200
         self.game_height = 200
 
-        self.screen_width = 90
-        self.screen_height = 90
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
         # Set up the screen and game objects
         turtle.setworldcoordinates(0, self.game_height, self.game_width, 0)
@@ -35,7 +36,16 @@ class game():
         self.header = turtle.Turtle()
 
         self.policy = policy
-      
+
+        # if a model is specified, we use it to play the game
+        if model_path != None:
+            model = QNetwork(4, 4, 42)
+            model.load_state_dict(torch.load(model_path))
+            model.eval()
+            self.model = model
+        else:
+            self.model = None
+
 
     def go_up(self):
         self.started = True
@@ -98,8 +108,39 @@ class game():
         x = int(self.snake.xcor()/ self.step)
         y = int(self.snake.ycor()/ self.step)
 
+        # find index of food
+        self.reward_idx = int(self.food.ycor()/self.step)*self.step + int(self.food.xcor()/self.step)
+        
         action = self.policy[y,x, int(self.reward_idx)]
         
+        
+        if action == 0:
+            self.snake.direction = "down"
+        elif action == 1:
+            self.snake.direction = "up"
+        elif action == 2:
+            self.snake.direction = "right"
+        elif action == 3:
+            self.snake.direction = "left"
+        
+        wall = self.move()
+
+        return wall
+
+    def follow_model(self):
+        wall = False
+        
+        # x,y are normlized coordinates
+        x = self.snake.xcor()/ self.screen_width
+        y = self.snake.ycor()/ self.screen_height
+     
+        goal_x = self.food.xcor()/ self.screen_width
+        goal_y = self.food.ycor()/ self.screen_height
+
+        input = torch.tensor([y,x,goal_y, goal_x]).unsqueeze(0)
+        action = self.model(input.float())
+        action = torch.argmax(action).item()
+
         if action == 0:
             self.snake.direction = "down"
         elif action == 1:
@@ -120,14 +161,19 @@ class game():
             self.wn.update()
 
             # Check for a collision with the food
-            if self.snake.distance(self.food) < self.step:
+            if self.snake.distance(self.food) < self.step*2:
 
                 # Move the food to a random spot
-                x = random.randint(0, 9)
-                y = random.randint(0, 9)
-                self.reward_idx = int(y*(self.step) + x)
-                
-                self.food.goto(x*self.step, y*self.step)
+                x = random.randint(0, self.screen_width)
+                y = random.randint(0, self.screen_height)
+
+                # if the space is discretized and we are using a policy
+                # we need to find the closest discretized coordinate
+                if self.policy is not None:
+                    x = int(x/self.step)*self.step
+                    y = int(y/self.step)*self.step
+
+                self.food.goto(y,x)
 
                 # add a segment to the snake
                 self.add_segment()
@@ -154,10 +200,12 @@ class game():
                 self.body[0].goto(x,y)
 
         
-            if self.policy is None:
-                wall = self.move()  
-            else:
+            if self.policy is not None:
                 wall = self.follow_policy()  
+            elif self.model is not None:
+                wall = self.follow_model()
+            else:
+                wall = self.move()  
 
             # if we touched the wall, decide what to do
             if wall:
@@ -208,8 +256,9 @@ class game():
         self.food.penup()
         
         # find reward position
-        y =  self.reward_idx//self.screen_height
-        x = self.reward_idx%self.screen_height
+        y = 30
+        x = 30
+        self.reward_idx = int(y + x%self.step)
         self.food.goto(y,x)
         
         self.header.speed(0)
