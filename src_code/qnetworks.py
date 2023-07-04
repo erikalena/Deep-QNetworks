@@ -2,18 +2,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-import matplotlib
 import numpy as np
 import sys
 from qlearning import *
 from torch.utils.data import DataLoader
+from collections import deque
 
-# construct a simple neural networks
-# which takes as input the state of the game (position in which we are i,j and the index of the reward)
-# and outputs the action to take (up, down, left, right)
 
-# define a simple pytorch neural network
 class QNetwork(nn.Module):
+    """
+    Define a simple pytorch neural network, which takes as input 
+    the state of the game (position in which we are i,j and the index of the reward) 
+    and outputs the action to take (up, down, left, right)
+    """
         
     def __init__(self, state_size, action_size, seed, fc1_units=16):
         
@@ -46,9 +47,75 @@ class QNetwork(nn.Module):
             else:
                 nn.init.uniform_(param, 0.1, 0.2)
         
-        
+
+##################################
+# Qlearning with experience replay
+##################################
+
+class QLearnNN(nn.Module):
+    def __init__(self, num_inputs, num_actions):
+        super(QLearnNN, self).__init__()
+        self.fc1 = nn.Linear(num_inputs, 32)
+        self.fc2 = nn.Linear(32, 32)
+        self.out = nn.Linear(32, num_actions)
+
+    def forward(self, states):
+        x = F.relu(self.fc1(states))
+        x = F.relu(self.fc2(x))
+        return self.out(x)
 
 
+
+
+class ReplayBuffer(object):
+    """
+    Replay buffer to store past experiences that the 
+    agent can then use for training the neural network.
+    """
+
+    def __init__(self, size, device="cpu"):
+        self.buffer = deque(maxlen=size)
+        self.device = device
+
+    def add(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
+
+    def __len__(self):
+        return len(self.buffer)
+
+    def sample(self, num_samples):
+        states, actions, rewards, next_states, dones = [], [], [], [], []
+        idx = np.random.choice(len(self.buffer), num_samples)
+        for i in idx:
+            elem = self.buffer[i]
+            state, action, reward, next_state, done = elem
+            states.append(state)
+            actions.append(action)
+            rewards.append(reward)
+            next_states.append(np.array(next_state, copy=False))
+            dones.append(done)
+
+        states = torch.as_tensor(states, device=self.device)
+        actions = torch.as_tensor(actions, device=self.device)
+        rewards = torch.as_tensor(
+            np.array(rewards, dtype=np.float32), device=self.device
+        )
+        next_states = torch.as_tensor(next_states, device=self.device)
+        dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
+        return states, actions, rewards, next_states, dones
+            
+
+def select_epsilon_greedy_action(state, epsilon):
+  """Take random action with probability epsilon, else take best action."""
+  result = np.random.uniform()
+  if result < epsilon:
+    return np.random.choice(action_space) 
+  else:
+    # input is a tensor of floats
+    input = torch.as_tensor(state, dtype=torch.float32)
+    qs = main_nn(input).cpu().data.numpy()
+    return np.argmax(qs) # Greedy action for state.
+  
 class customDataset(torch.utils.data.Dataset):
     def __init__(self, input, labels):
         self.input = input

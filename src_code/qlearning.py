@@ -66,7 +66,7 @@ class GridWorldEnv():
         Evolves the environment given action A and current state.
         """
         # Check if action A is in proper set
-        assert A in np.array([[1,0],[0,1],[-1,0],[0,-1]]) #[Down,   Up,  Right,Left]
+        assert A in np.array([[1,0],[-1,0],[0,1],[0,-1]]) 
         S = self.current_state
         S_new = S + A
 
