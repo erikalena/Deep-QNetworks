@@ -105,16 +105,7 @@ class ReplayBuffer(object):
         return states, actions, rewards, next_states, dones
             
 
-def select_epsilon_greedy_action(state, epsilon):
-  """Take random action with probability epsilon, else take best action."""
-  result = np.random.uniform()
-  if result < epsilon:
-    return np.random.choice(action_space) 
-  else:
-    # input is a tensor of floats
-    input = torch.as_tensor(state, dtype=torch.float32)
-    qs = main_nn(input).cpu().data.numpy()
-    return np.argmax(qs) # Greedy action for state.
+
   
 class customDataset(torch.utils.data.Dataset):
     def __init__(self, input, labels):
