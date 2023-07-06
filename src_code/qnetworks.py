@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from qlearning import *
+from src_code.qlearning import *
 from torch.utils.data import DataLoader
 from collections import deque
 
@@ -73,7 +73,7 @@ class ReplayBuffer(object):
     agent can then use for training the neural network.
     """
 
-    def __init__(self, size, device="cpu"):
+    def __init__(self, size, device:str = 'cpu'):
         self.buffer = deque(maxlen=size)
         self.device = device
 
@@ -109,7 +109,7 @@ class ReplayBuffer(object):
 
 
   
-class customDataset(torch.utils.data.Dataset):
+class customDataset(torch.utils.data.Dataset): #type: ignore
     def __init__(self, input, labels):
         self.input = input
         self.labels = labels

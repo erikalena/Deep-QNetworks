@@ -220,7 +220,7 @@ class GridWorldEnv():
         # plot init
         text = ax.text(self.start[0],self.start[1], 'S', ha="center", va="center", color="black")
         # color the cell where the agent is
-        im.axes.add_patch(matplotlib.patches.Rectangle((self.start[0]-0.5, self.start[1]-0.5), 1, 1, fill=True, color='green', alpha=0.5))
+        im.axes.add_patch(matplotlib.patches.Rectangle((self.start[0]-0.5, self.start[1]-0.5), 1, 1, fill=True, color='green', alpha=0.5)) # type: ignore
 
         
         plt.show()
@@ -237,7 +237,7 @@ class GridWorldEnv():
         fig, ((ax1), (ax2)) = plt.subplots(2,1)
 
         values = self.values[:,:,goal_idx]
-        im1 = ax1.imshow(values, cmap=plt.get_cmap("Spectral"))
+        im1 = ax1.imshow(values, cmap=plt.get_cmap("Spectral")) # type: ignore
 
         
         optimal_policy_index_QLearning = self.policy[:,:,goal_idx].astype(int)
@@ -255,7 +255,7 @@ class GridWorldEnv():
                     text = ax1.text(i, j, '{:.2f}'.format(values[j, i]), ha="center", va="center", color="black")
         
         
-        im2 = ax2.imshow(values, cmap=plt.get_cmap("Spectral"))
+        im2 = ax2.imshow(values, cmap=plt.get_cmap("Spectral")) # type: ignore
         X = np.arange(self.Lx)
         Y = np.arange(self.Ly)
 
@@ -271,7 +271,7 @@ class GridWorldEnv():
 
 
 class Qlearning_TDControl():
-    def __init__(self, space_size, action_size, gamma=1, lr_v=0.01):
+    def __init__(self, space_size, action_size, gamma:float=1, lr_v=0.01):
         """
         Calculates optimal policy using off-policy Temporal Difference control
         Evaluates Q-value for (S,A) pairs, using one-step updates.
