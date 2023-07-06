@@ -86,6 +86,10 @@ class ReplayBuffer(object):
     def sample(self, num_samples):
         states, actions, rewards, next_states, dones = [], [], [], [], []
         idx = np.random.choice(len(self.buffer), num_samples)
+       
+        idx[0] = np.random.randint(0, len(self.buffer)-(num_samples+1))
+        idx[1:] = np.arange(idx[0]+1, idx[0]+num_samples)
+
         for i in idx:
             elem = self.buffer[i]
             state, action, reward, next_state, done = elem
@@ -95,12 +99,10 @@ class ReplayBuffer(object):
             next_states.append(np.array(next_state, copy=False))
             dones.append(done)
 
-        states = torch.as_tensor(states, device=self.device)
-        actions = torch.as_tensor(actions, device=self.device)
-        rewards = torch.as_tensor(
-            np.array(rewards, dtype=np.float32), device=self.device
-        )
-        next_states = torch.as_tensor(next_states, device=self.device)
+        states = torch.as_tensor(np.array(states, dtype=np.float32), device=self.device)
+        actions = torch.as_tensor(np.array(actions,  dtype=np.float32), device=self.device)
+        rewards = torch.as_tensor(np.array(rewards, dtype=np.float32), device=self.device)
+        next_states = torch.as_tensor(np.array(next_states, dtype=np.float32), device=self.device)
         dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
         return states, actions, rewards, next_states, dones
             
