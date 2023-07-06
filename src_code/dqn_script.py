@@ -8,12 +8,11 @@ from qnetworks import ReplayBuffer
 from deep_qnetworks import DQN, SnakeEnv
 import sys
 
-seed = 42
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-epsilon = 1.0  
+
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 batch_size = 32  # Size of batch taken from replay buffer
-max_steps_per_episode = 10000
 
 
 
@@ -61,15 +60,16 @@ def train_step(states, actions, rewards, next_states, dones, discount):
 
 
 def dqn_learning(env, filename):
-    max_num_episodes = 10000
+    
 
     # initialize the buffer, with a size of 100000, when it is full, it will remove the oldest element
     buffer = ReplayBuffer(size = 100000, device=device) 
 
     cur_frame = 0
-    episode = 0
     last_100_ep_rewards = []
-    max_steps_per_episode = 100
+    max_steps_per_episode = 5000
+    max_num_episodes = 10000
+
     epsilon = 1.0
     epsilon_min = 0.1  # Minimum epsilon greedy parameter
     epsilon_max = 1.0  # Maximum epsilon greedy parameter
@@ -93,12 +93,14 @@ def dqn_learning(env, filename):
         f.write(f'Max steps per episode: {max_steps_per_episode}\n')
         f.write(f'Update after actions: {update_after_actions}\n')
         f.write(f'Size of environment: {env.Lx}x{env.Ly}\n')
-        f.write('epsiode, reward\n')
+        f.write(f'Number of random frames: {epsilon_random_frames}\n')
+        f.write(f'Number of greedy frames: {epsilon_greedy_frames}\n')
+        f.write('episode, reward\n')
     
     
     env.start = np.array([0,0])
 
-    for e in range(max_num_episodes):
+    for episode in range(max_num_episodes):
         env.reset()
         episode_reward = 0
 
@@ -142,11 +144,10 @@ def dqn_learning(env, filename):
 
             timestep += 1
 
-            if episode > epsilon_random_frames:
+            if timestep > epsilon_random_frames:
                 epsilon -= (epsilon_max - epsilon_min) / epsilon_greedy_frames
                 epsilon = max(epsilon, epsilon_min)
         
-        episode += 1
 
         
         if len(last_100_ep_rewards) == 100:
