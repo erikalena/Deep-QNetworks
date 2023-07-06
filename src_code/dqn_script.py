@@ -95,7 +95,7 @@ def dqn_learning(env, filename):
         f.write(f'Size of environment: {env.Lx}x{env.Ly}\n')
         f.write(f'Number of random frames: {epsilon_random_frames}\n')
         f.write(f'Number of greedy frames: {epsilon_greedy_frames}\n')
-        f.write('episode, reward\n')
+        f.write('episode, reward, epsilon\n')
     
     
     env.start = np.array([0,0])
@@ -162,7 +162,7 @@ def dqn_learning(env, filename):
 
             # write on file current average reward
             with open(filename, 'a') as f:
-                f.write(f'{episode},{running_reward:.2f}')
+                f.write(f'{episode},{running_reward:.2f}, {epsilon:.3f}\n')
 
         # Condition to consider the task solved
         # e.g. to eat at least 6 consecutive food items
