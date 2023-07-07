@@ -1,0 +1,86 @@
+{
+    "configuration": {
+        "device": "cuda:0",
+        "batch_size": 32,
+        "env_size_x": 20,
+        "env_size_y": 20,
+        "max_steps_per_episode": 5000,
+        "max_num_episodes": 10000,
+        "update_after_actions": 4,
+        "epsilon": 1.0,
+        "epsilon_min": 0.1,
+        "epsilon_max": 1.0,
+        "update_target_network": 10000,
+        "epsilon_random_frames": 50000,
+        "epsilon_greedy_frames": 100000.0,
+        "output_filename": "log.json",
+        "output_logdir": "./results/16759",
+        "output_checkpoint_dir": "./checkpoint/16759"
+    },
+    "episode 0": {
+        "epsilon": 1.0,
+        "reward": -1496698.0,
+        "loss": 436.7378234863281,
+        "estimated_time": 60.080796241760254
+    },
+    "episode 100": {
+        "epsilon": 1.0,
+        "reward": -1401796.33,
+        "loss": 0.20589232444763184,
+        "estimated_time": 6008.216331243515
+    },
+    "episode 200": {
+        "epsilon": 1.0,
+        "reward": -1409599.77,
+        "loss": 561.3649291992188,
+        "estimated_time": 11908.762695550919
+    },
+    "episode 300": {
+        "epsilon": 1.0,
+        "reward": -1407596.59,
+        "loss": 374.28472900390625,
+        "estimated_time": 17807.38973879814
+    },
+    "episode 400": {
+        "epsilon": 1.0,
+        "reward": -1411402.25,
+        "loss": 252.80825805664062,
+        "estimated_time": 23708.521232128143
+    },
+    "episode 500": {
+        "epsilon": 1.0,
+        "reward": -1416502.29,
+        "loss": 436.6587829589844,
+        "estimated_time": 29648.30511856079
+    },
+    "episode 600": {
+        "epsilon": 1.0,
+        "reward": -1429130.33,
+        "loss": 280.79547119140625,
+        "estimated_time": 35602.14944314957
+    },
+    "episode 700": {
+        "epsilon": 1.0,
+        "reward": -1487043.94,
+        "loss": 0.1655966341495514,
+        "estimated_time": 41538.475491046906
+    },
+    "episode 800": {
+        "epsilon": 1.0,
+        "reward": -1437383.34,
+        "loss": 280.88409423828125,
+        "estimated_time": 47451.784434080124
+    },
+    "episode 900": {
+        "epsilon": 1.0,
+        "reward": -1531572.07,
+        "loss": 219.895263671875,
+        "estimated_time": 53360.50574231148
+    },
+    "episode 1000": {
+        "epsilon": 1.0,
+        "reward": -1404781.78,
+        "loss": 467.87152099609375,
+        "estimated_time": 59264.061086416245
+    }
+}
