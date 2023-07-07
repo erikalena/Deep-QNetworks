@@ -5,8 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
-import copy
-import sys
 from dataclasses import dataclass
 import argparse
 import logging
@@ -22,7 +20,7 @@ class Config:
     env_size_x: int = 20
     env_size_y: int = 20
     max_steps_per_episode: int = 5000
-    max_num_episodes: int = 10000
+    max_num_episodes: int = 5000
     update_after_actions: int = 4
     epsilon: float = 1.0
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
@@ -33,7 +31,7 @@ class Config:
         50000  # Number of frames to take random action and observe output
     )
     epsilon_greedy_frames: float = 100000.0  # Number of frames for exploration
-    output_filename: str = "dqn_results.json"
+    output_filename: str = "log.json"
     output_logdir: str = "results"
     output_checkpoint_dir: str = "checkpoints"
 
@@ -97,7 +95,8 @@ def dqn_learning(env, filename):
     buffer = ReplayBuffer(size=100000, device=CONFIG.device)
 
     cur_frame = 0
-    last_100_ep_rewards = []
+    last_100_ep_rewards = []  #!! Why do not reset to each episode?
+    last_100_losses = []  #!! Added for tracking losses
 
     # print all configuration of file
     # open file
@@ -105,10 +104,12 @@ def dqn_learning(env, filename):
     with open(filename, "w") as f:
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
-    
-    env.start = np.array([0, 0])
 
-    for episode in tqdm(range(CONFIG.max_num_episodes), desc="Run episodes"):
+    epsilon = CONFIG.epsilon
+
+    env.start = np.array([0, 0])
+    pbar = tqdm(range(CONFIG.max_num_episodes), desc="Run episodes")
+    for episode in range(CONFIG.max_num_episodes):
         env.reset()
         episode_reward = 0
 
@@ -123,12 +124,12 @@ def dqn_learning(env, filename):
 
         # done = False
         timestep = 0
-
+        accumulated_loss = 0
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
             state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
-            action = env.select_epsilon_greedy_action(model, state_in, CONFIG.epsilon)
+            action = env.select_epsilon_greedy_action(model, state_in, epsilon)
 
             next_state, reward, done = env.single_step(state, action)
             episode_reward += reward
@@ -157,7 +158,7 @@ def dqn_learning(env, filename):
             timestep += 1
 
             if timestep > CONFIG.epsilon_random_frames:
-                CONFIG.epsilon -= (
+                epsilon -= (
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
                 epsilon = max(CONFIG.epsilon, CONFIG.epsilon_min)
@@ -165,17 +166,29 @@ def dqn_learning(env, filename):
         if len(last_100_ep_rewards) == 100:
             last_100_ep_rewards = last_100_ep_rewards[1:]
         last_100_ep_rewards.append(episode_reward)
-
         running_reward = np.mean(last_100_ep_rewards)
+
+        if len(last_100_losses) == 100:
+            last_100_losses = last_100_losses[1:]
+        last_100_losses.append(loss.item())
+        running_loss = np.mean(last_100_losses)
 
         if episode % 100 == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
             file = json.load(open(filename))
-            file["episode {}".format(episode)] = {"epsilon": CONFIG.epsilon, "reward": running_reward}
-            json.dump(file, open(filename, "w"), indent=4)    
+            file["episode_{}".format(episode)] = {
+                "epsilon": epsilon,
+                "reward": running_reward,
+                "loss": running_loss,
+                "estimated_time": pbar.format_dict["elapsed"],
+            }
+            json.dump(file, open(filename, "w"), indent=4)
             # Save model
-            torch.save(model.state_dict(), f"{CONFIG.output_checkpoint_dir}/model_{episode}.pth")
+            torch.save(
+                model.state_dict(),
+                f"{CONFIG.output_checkpoint_dir}/model_{episode}.pth",
+            )
 
         # Condition to consider the task solved
         # e.g. to eat at least 6 consecutive food items
@@ -183,6 +196,7 @@ def dqn_learning(env, filename):
         if running_reward > 500:
             logging.info("Solved at episode {}!".format(episode))
             break
+        pbar.update(1)
 
 
 if __name__ == "__main__":
@@ -251,10 +265,9 @@ if __name__ == "__main__":
     CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
 
     logging.info(f"Start training with configuration: {CONFIG}")
-    #make directory for checkpoints and results
+    # make directory for checkpoints and results
     os.makedirs(CONFIG.output_logdir, exist_ok=True)
     os.makedirs(CONFIG.output_checkpoint_dir, exist_ok=True)
-
 
     env = SnakeEnv(CONFIG.env_size_x, CONFIG.env_size_y)
 
