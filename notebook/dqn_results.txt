@@ -1,0 +1,13 @@
+Lx: 20
+max_steps_per_episode: 100
+max_num_episodes: 10000
+epsilon_min: 0.1
+epsilon_max: 1.0
+update_after_actions: 4
+update_target_network: 10000
+epsilon_random_frames: 50000
+epsilon_greedy_frames: 100000.0
+0,41.00, 1.000
+1000,-76.39, 0.990
+2000,-76.29, 0.980
+3000,-87.95, 0.970

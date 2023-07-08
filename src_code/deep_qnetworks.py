@@ -12,14 +12,14 @@ import copy
 
 
 class DQN(nn.Module):
-    def __init__(self, in_channels=1, num_actions=4, input_size=84):
+    def __init__(self, in_channels=1, num_actions=4, input_size=84, device='cpu'):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.input_size = self.compute_conv_output_size(input_size)
         self.fc = nn.Linear(64*self.input_size*self.input_size, 256)
         self.out = nn.Linear(256, num_actions)
-
+        self.device = device
 
     def forward(self, states):
         x = F.relu(self.conv1(states))
