@@ -124,7 +124,7 @@ def dqn_learning(env, filename):
         # done = False
         timestep = 0
 
-        while timestep < CONFIG.max_steps_per_episode:
+        while timestep < CONFIG.max_steps_per_episode and not done:
             cur_frame += 1
 
             state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
@@ -160,7 +160,7 @@ def dqn_learning(env, filename):
                 CONFIG.epsilon -= (
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
-                epsilon = max(CONFIG.epsilon, CONFIG.epsilon_min)
+                CONFIG.epsilon = max(CONFIG.epsilon, CONFIG.epsilon_min)
 
         if len(last_100_ep_rewards) == 100:
             last_100_ep_rewards = last_100_ep_rewards[1:]
