@@ -179,11 +179,13 @@ def dqn_learning(env, filename):
         if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
+            logging.info(f"Saving results at episode {episode}")
             file = json.load(open(filename))
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
                 "reward": running_reward,
                 "loss": running_loss,
+                "Max_points": env.get_points(),
                 "estimated_time": pbar.format_dict["elapsed"],
             }
             json.dump(file, open(filename, "w"), indent=4)
@@ -284,22 +286,42 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Update the configuration values
-    CONFIG.logging_level = logging.DEBUG if args.debug else CONFIG.logging_level
-    CONFIG.env_size_x = args.Lx
-    CONFIG.env_size_y = args.Ly
-    CONFIG.max_num_episodes = args.episodes
-    CONFIG.batch_size = args.batch_size
-    CONFIG.max_steps_per_episode = args.max_steps
-    CONFIG.update_after_actions = args.update_after
-    CONFIG.epsilon = args.epsilon
-    CONFIG.epsilon_min = args.epsilon_min
-    CONFIG.epsilon_max = args.epsilon_max
-    CONFIG.update_target_network = args.update_target
-    CONFIG.epsilon_random_frames = args.epsilon_random_frames
-    CONFIG.epsilon_greedy_frames = args.epsilon_greedy_frames
-    CONFIG.output_logdir = args.output_log_dir
-    CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
+    CONFIG = Config(
+        logging_level=logging.DEBUG if args.debug else CONFIG.logging_level,
+        env_size_x=args.Lx,
+        env_size_y=args.Ly,
+        max_num_episodes=args.episodes,
+        batch_size=args.batch_size,
+        max_steps_per_episode=args.max_steps,
+        update_after_actions=args.update_after,
+        epsilon=args.epsilon,
+        epsilon_min=args.epsilon_min,
+        epsilon_max=args.epsilon_max,
+        update_target_network=args.update_target,
+        epsilon_random_frames=args.epsilon_random_frames,
+        epsilon_greedy_frames=args.epsilon_greedy_frames,
+        output_logdir=args.output_log_dir,
+        output_checkpoint_dir=args.output_checkpoint_dir,
+    )
+
+
+
+    # # Update the configuration values
+    # CONFIG.logging_level = logging.DEBUG if args.debug else CONFIG.logging_level
+    # CONFIG.env_size_x = args.Lx
+    # CONFIG.env_size_y = args.Ly
+    # CONFIG.max_num_episodes = args.episodes
+    # CONFIG.batch_size = args.batch_size
+    # CONFIG.max_steps_per_episode = args.max_steps
+    # CONFIG.update_after_actions = args.update_after
+    # CONFIG.epsilon = args.epsilon
+    # CONFIG.epsilon_min = args.epsilon_min
+    # CONFIG.epsilon_max = args.epsilon_max
+    # CONFIG.update_target_network = args.update_target
+    # CONFIG.epsilon_random_frames = args.epsilon_random_frames
+    # CONFIG.epsilon_greedy_frames = args.epsilon_greedy_frames
+    # CONFIG.output_logdir = args.output_log_dir
+    # CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
     logging.basicConfig(level=CONFIG.logging_level)
 
     logging.info(f"Start training with configuration: {CONFIG}")

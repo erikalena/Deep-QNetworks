@@ -67,6 +67,7 @@ class SnakeEnv():
         self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
         self.num_actions = len(self.actions)
         self.body = []
+        self.points = 1
         
     def reset(self):
         """
@@ -75,6 +76,7 @@ class SnakeEnv():
         self.current_state = self.start
         self.body = []
         self.done = False
+        self.points = 1
         
     def single_step(self, state, action):
         """
@@ -114,6 +116,7 @@ class SnakeEnv():
             self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
+            self.points += 1 # if we eat the food we have a level of 1
             new_segment = self.body[-1] if len(self.body) > 0 else S_new[:2]
             self.body.append(new_segment)
         
@@ -121,6 +124,8 @@ class SnakeEnv():
         self.current_state = S_new[:2]
         return S_new, reward, self.done
     
+    def get_points(self):
+        return self.points
 
 
     def get_image(self,state):
