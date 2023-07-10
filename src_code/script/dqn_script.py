@@ -16,16 +16,15 @@ import datetime
 
 @dataclass
 class Config:
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    current_time:str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
     env_size_y: int = 20
-    max_steps_per_episode: int = 5000
+    max_steps_per_episode: int = 10000
     max_num_episodes: int = 5000
-    update_after_actions: int = 4
     epsilon: float = 1.0
-    epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
+    epsilon_min: float = 0.4  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
@@ -36,7 +35,7 @@ class Config:
     output_filename: str = "log.json"
     output_logdir: str = "results"
     output_checkpoint_dir: str = "checkpoints"
-    save_step: int = 100  # Save model every 100 episodes and log results
+    save_step: int = 50  # Save model every 100 episodes and log results
     logging_level: int = logging.INFO
 
 
@@ -101,6 +100,8 @@ def dqn_learning(env, filename):
     cur_frame = 0
     last_100_ep_rewards = []  #!! Why do not reset to each episode?
     last_100_losses = []  #!! Added for tracking losses
+    last_100_points = []  #!! Added for tracking points
+    last_100_steps = []  #!! Added for tracking steps
 
     # print all configuration of file
     # open file
@@ -165,27 +166,43 @@ def dqn_learning(env, filename):
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
                 epsilon = max(epsilon, CONFIG.epsilon_min)
+                
+            if done:
+                break
 
-        if len(last_100_ep_rewards) == 100:
+        if len(last_100_ep_rewards) == CONFIG.save_step:
             last_100_ep_rewards = last_100_ep_rewards[1:]
         last_100_ep_rewards.append(episode_reward)
         running_reward = np.mean(last_100_ep_rewards)
 
-        if len(last_100_losses) == 100:
+        if len(last_100_losses) == CONFIG.save_step:
             last_100_losses = last_100_losses[1:]
         last_100_losses.append(loss.item())
         running_loss = np.mean(last_100_losses)
+        
+        if len(last_100_points) == CONFIG.save_step:
+            last_100_points = last_100_points[1:]
+        last_100_points.append(env.get_points())
+        running_points = np.mean(last_100_points)
+        
+        if len(last_100_steps) == CONFIG.save_step:
+            last_100_steps = last_100_steps[1:]
+        last_100_steps.append(timestep)
+        running_steps = np.mean(last_100_steps)
 
         if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
-            logging.info(f"Saving results at episode {episode}")
+            logging.info(f"\n Saving results at episode {episode}")
             file = json.load(open(filename))
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
-                "reward": running_reward,
-                "loss": running_loss,
-                "Max_points": env.get_points(),
+                "points": env.get_points(),
+                "steps" : timestep,
+                "reward_mean": running_reward,
+                "loss_mean": running_loss,
+                "points_mean": running_points,
+                "steps_mean": running_steps,
                 "estimated_time": pbar.format_dict["elapsed"],
             }
             json.dump(file, open(filename, "w"), indent=4)
@@ -287,6 +304,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     CONFIG = Config(
+        current_time=datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         logging_level=logging.DEBUG if args.debug else CONFIG.logging_level,
         env_size_x=args.Lx,
         env_size_y=args.Ly,

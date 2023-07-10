@@ -113,7 +113,7 @@ class SnakeEnv():
             S_new[1] = self.Lx - 1
 
         elif np.all(S_new[:2] == S_new[2:]):
-            self.done = True       
+            # self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
             self.points += 1 # if we eat the food we have a level of 1

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -n12
-#SBATCH --job-name=finetuning
+#SBATCH --job-name=train
 #SBATCH -N1
 #SBATCH -p DGX
 #SBATCH --gpus=1
@@ -10,6 +10,7 @@
 #SBATCH --error=my_job_%j.err
 
 
+#Comment 
 conda activate torch
 echo $SLURM_JOB_ID
 # Run the application

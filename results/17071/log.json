@@ -1,0 +1,112 @@
+{
+    "configuration": {
+        "device": "cuda",
+        "batch_size": 32,
+        "env_size_x": 20,
+        "env_size_y": 20,
+        "max_steps_per_episode": 5000,
+        "max_num_episodes": 5000,
+        "update_after_actions": 4,
+        "epsilon": 1.0,
+        "epsilon_min": 0.1,
+        "epsilon_max": 1.0,
+        "update_target_network": 10000,
+        "epsilon_random_frames": 50000,
+        "epsilon_greedy_frames": 100000.0,
+        "output_filename": "log.json",
+        "output_logdir": "./results/17071",
+        "output_checkpoint_dir": "./checkpoint/17071",
+        "save_step": 100,
+        "logging_level": 20
+    },
+    "episode_0": {
+        "epsilon": 1.0,
+        "reward": -1300793.0,
+        "loss": 0.06039922684431076,
+        "estimated_time": 61.26848387718201
+    },
+    "episode_100": {
+        "epsilon": 0.1,
+        "reward": -560240.55,
+        "loss": 123.88079579324811,
+        "estimated_time": 6374.744146823883
+    },
+    "episode_200": {
+        "epsilon": 0.1,
+        "reward": -383121.08,
+        "loss": 88.15541960444418,
+        "estimated_time": 12702.86747765541
+    },
+    "episode_300": {
+        "epsilon": 0.1,
+        "reward": -339517.08,
+        "loss": 54.727810654628556,
+        "estimated_time": 19057.998965263367
+    },
+    "episode_400": {
+        "epsilon": 0.1,
+        "reward": -317956.75,
+        "loss": 77.53266735390876,
+        "estimated_time": 25346.578780412674
+    },
+    "episode_500": {
+        "epsilon": 0.1,
+        "reward": -296963.17,
+        "loss": 60.04055385753047,
+        "estimated_time": 31606.74704861641
+    },
+    "episode_600": {
+        "epsilon": 0.1,
+        "reward": -266899.66,
+        "loss": 39.09365936860093,
+        "estimated_time": 37867.599821567535
+    },
+    "episode_700": {
+        "epsilon": 0.1,
+        "reward": -384421.6,
+        "loss": 96.79819183678832,
+        "estimated_time": 44132.45717024803
+    },
+    "episode_800": {
+        "epsilon": 0.1,
+        "reward": -288967.81,
+        "loss": 69.79327201447683,
+        "estimated_time": 50397.39631819725
+    },
+    "episode_900": {
+        "epsilon": 0.1,
+        "reward": -263448.65,
+        "loss": 43.97786777324742,
+        "estimated_time": 56664.590379714966
+    },
+    "episode_1000": {
+        "epsilon": 0.1,
+        "reward": -248327.9,
+        "loss": 49.6226880881004,
+        "estimated_time": 62938.40982031822
+    },
+    "episode_1100": {
+        "epsilon": 0.1,
+        "reward": -282075.98,
+        "loss": 51.50604318191297,
+        "estimated_time": 69239.76046919823
+    },
+    "episode_1200": {
+        "epsilon": 0.1,
+        "reward": -271857.64,
+        "loss": 58.01851488593966,
+        "estimated_time": 75500.99811792374
+    },
+    "episode_1300": {
+        "epsilon": 0.1,
+        "reward": -270178.42,
+        "loss": 38.95341253265738,
+        "estimated_time": 81796.04433870316
+    },
+    "episode_1400": {
+        "epsilon": 0.1,
+        "reward": -280558.03,
+        "loss": 60.585663124807176,
+        "estimated_time": 88102.97270488739
+    }
+}
