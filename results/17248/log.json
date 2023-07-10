@@ -18,7 +18,8 @@
         "output_logdir": "./results/17248",
         "output_checkpoint_dir": "./checkpoint/17248",
         "save_step": 50,
-        "logging_level": 20
+        "logging_level": 20,
+        "description": "Done after snake eats itself"
     },
     "episode_0": {
         "epsilon": 1.0,
@@ -429,5 +430,15 @@
         "points_mean": 2.2,
         "steps_mean": 593.36,
         "estimated_time": 14421.761839151382
+    },
+    "episode_2050": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 522,
+        "reward_mean": -1206.46,
+        "loss_mean": 1.070629765309859,
+        "points_mean": 2.22,
+        "steps_mean": 530.48,
+        "estimated_time": 14734.2132294178
     }
 }

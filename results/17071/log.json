@@ -17,7 +17,8 @@
         "output_logdir": "./results/17071",
         "output_checkpoint_dir": "./checkpoint/17071",
         "save_step": 100,
-        "logging_level": 20
+        "logging_level": 20,
+        "description": "no done"
     },
     "episode_0": {
         "epsilon": 1.0,
@@ -108,5 +109,11 @@
         "reward": -280558.03,
         "loss": 60.585663124807176,
         "estimated_time": 88102.97270488739
+    },
+    "episode_1500": {
+        "epsilon": 0.1,
+        "reward": -263920.86,
+        "loss": 64.51622195877135,
+        "estimated_time": 94402.3292863369
     }
 }
