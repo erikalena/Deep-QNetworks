@@ -1,0 +1,444 @@
+{
+    "configuration": {
+        "current_time": "20230710-142218",
+        "device": "cuda",
+        "batch_size": 32,
+        "env_size_x": 20,
+        "env_size_y": 20,
+        "max_steps_per_episode": 10000,
+        "max_num_episodes": 5000,
+        "epsilon": 1.0,
+        "epsilon_min": 0.4,
+        "epsilon_max": 1.0,
+        "update_after_actions": 4,
+        "update_target_network": 10000,
+        "epsilon_random_frames": 50000,
+        "epsilon_greedy_frames": 100000.0,
+        "output_filename": "log.json",
+        "output_logdir": "./results/17248",
+        "output_checkpoint_dir": "./checkpoint/17248",
+        "save_step": 50,
+        "logging_level": 20,
+        "description": "Done after snake eats itself"
+    },
+    "episode_0": {
+        "epsilon": 1.0,
+        "points": 2,
+        "steps": 427,
+        "reward_mean": -1325.0,
+        "loss_mean": 5.823252649861388e-05,
+        "points_mean": 2.0,
+        "steps_mean": 427.0,
+        "estimated_time": 5.708422899246216
+    },
+    "episode_50": {
+        "epsilon": 0.8600680000011547,
+        "points": 2,
+        "steps": 651,
+        "reward_mean": -1715.82,
+        "loss_mean": 1.431912116527965,
+        "points_mean": 2.2,
+        "steps_mean": 957.9,
+        "estimated_time": 549.7578189373016
+    },
+    "episode_100": {
+        "epsilon": 0.6116380000032047,
+        "points": 2,
+        "steps": 79,
+        "reward_mean": -1414.06,
+        "loss_mean": 0.681186807132326,
+        "points_mean": 2.32,
+        "steps_mean": 828.1,
+        "estimated_time": 1033.5235896110535
+    },
+    "episode_150": {
+        "epsilon": 0.4195420000040454,
+        "points": 2,
+        "steps": 1841,
+        "reward_mean": -1384.32,
+        "loss_mean": 0.7550816817110172,
+        "points_mean": 2.14,
+        "steps_mean": 640.32,
+        "estimated_time": 1412.1090679168701
+    },
+    "episode_200": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1548,
+        "reward_mean": -1280.36,
+        "loss_mean": 2.0200964313698933,
+        "points_mean": 2.2,
+        "steps_mean": 602.36,
+        "estimated_time": 1770.2684643268585
+    },
+    "episode_250": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1639,
+        "reward_mean": -1235.5,
+        "loss_mean": 0.21009390326216817,
+        "points_mean": 2.28,
+        "steps_mean": 605.54,
+        "estimated_time": 2128.3697521686554
+    },
+    "episode_300": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 281,
+        "reward_mean": -1281.12,
+        "loss_mean": 3.21945098101045,
+        "points_mean": 2.24,
+        "steps_mean": 607.16,
+        "estimated_time": 2486.6706964969635
+    },
+    "episode_350": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 23,
+        "reward_mean": -1284.64,
+        "loss_mean": 2.003045477027772,
+        "points_mean": 2.22,
+        "steps_mean": 608.66,
+        "estimated_time": 2844.214945793152
+    },
+    "episode_400": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 1546,
+        "reward_mean": -1350.24,
+        "loss_mean": 0.9745231044420507,
+        "points_mean": 2.2,
+        "steps_mean": 672.24,
+        "estimated_time": 3238.909958600998
+    },
+    "episode_450": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 200,
+        "reward_mean": -1390.08,
+        "loss_mean": 3.2468093506759033,
+        "points_mean": 2.16,
+        "steps_mean": 648.1,
+        "estimated_time": 3618.9707975387573
+    },
+    "episode_500": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 1587,
+        "reward_mean": -1235.46,
+        "loss_mean": 1.3288145396392792,
+        "points_mean": 2.3,
+        "steps_mean": 647.48,
+        "estimated_time": 3998.022430419922
+    },
+    "episode_550": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 799,
+        "reward_mean": -1403.46,
+        "loss_mean": 2.6358255970908795,
+        "points_mean": 2.14,
+        "steps_mean": 599.52,
+        "estimated_time": 4349.8951151371
+    },
+    "episode_600": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 169,
+        "reward_mean": -1247.32,
+        "loss_mean": 0.14038582258159293,
+        "points_mean": 2.2,
+        "steps_mean": 569.32,
+        "estimated_time": 4684.2709448337555
+    },
+    "episode_650": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 2008,
+        "reward_mean": -1383.42,
+        "loss_mean": 2.5617061254568396,
+        "points_mean": 2.22,
+        "steps_mean": 727.42,
+        "estimated_time": 5111.312171936035
+    },
+    "episode_700": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 2331,
+        "reward_mean": -1395.2,
+        "loss_mean": 1.3841652057343163,
+        "points_mean": 2.12,
+        "steps_mean": 629.2,
+        "estimated_time": 5480.7652451992035
+    },
+    "episode_750": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 130,
+        "reward_mean": -1366.06,
+        "loss_mean": 3.8528571593016387,
+        "points_mean": 2.12,
+        "steps_mean": 600.06,
+        "estimated_time": 5832.779610872269
+    },
+    "episode_800": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 607,
+        "reward_mean": -1308.78,
+        "loss_mean": 0.7651326910220086,
+        "points_mean": 2.22,
+        "steps_mean": 652.78,
+        "estimated_time": 6215.799277305603
+    },
+    "episode_850": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 42,
+        "reward_mean": -1344.42,
+        "loss_mean": 0.7860941735771485,
+        "points_mean": 2.12,
+        "steps_mean": 578.42,
+        "estimated_time": 6555.706789255142
+    },
+    "episode_900": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 3158,
+        "reward_mean": -1448.6,
+        "loss_mean": 0.7832254867441952,
+        "points_mean": 2.18,
+        "steps_mean": 728.62,
+        "estimated_time": 6983.379817247391
+    },
+    "episode_950": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 408,
+        "reward_mean": -1263.7,
+        "loss_mean": 0.6594472426292487,
+        "points_mean": 2.22,
+        "steps_mean": 607.7,
+        "estimated_time": 7340.390333890915
+    },
+    "episode_1000": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 75,
+        "reward_mean": -1266.74,
+        "loss_mean": 0.7249812565546017,
+        "points_mean": 2.16,
+        "steps_mean": 524.76,
+        "estimated_time": 7648.563062429428
+    },
+    "episode_1050": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 471,
+        "reward_mean": -1376.46,
+        "loss_mean": 1.1797918553836644,
+        "points_mean": 2.16,
+        "steps_mean": 654.46,
+        "estimated_time": 8032.514885663986
+    },
+    "episode_1100": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 661,
+        "reward_mean": -1345.64,
+        "loss_mean": 0.6613446653494611,
+        "points_mean": 2.24,
+        "steps_mean": 691.66,
+        "estimated_time": 8439.051137447357
+    },
+    "episode_1150": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 323,
+        "reward_mean": -1164.8,
+        "loss_mean": 0.72229473345913,
+        "points_mean": 2.26,
+        "steps_mean": 512.84,
+        "estimated_time": 8740.163514614105
+    },
+    "episode_1200": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 649,
+        "reward_mean": -1205.8,
+        "loss_mean": 0.662015178615693,
+        "points_mean": 2.2,
+        "steps_mean": 527.8,
+        "estimated_time": 9049.987887382507
+    },
+    "episode_1250": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1402,
+        "reward_mean": -1361.92,
+        "loss_mean": 1.355144500301685,
+        "points_mean": 2.16,
+        "steps_mean": 619.94,
+        "estimated_time": 9414.341395616531
+    },
+    "episode_1300": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 325,
+        "reward_mean": -1049.34,
+        "loss_mean": 1.361326428670436,
+        "points_mean": 2.24,
+        "steps_mean": 395.36,
+        "estimated_time": 9646.485805511475
+    },
+    "episode_1350": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1314,
+        "reward_mean": -1374.9,
+        "loss_mean": 1.4060994662484154,
+        "points_mean": 2.14,
+        "steps_mean": 610.92,
+        "estimated_time": 10005.44968867302
+    },
+    "episode_1400": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 215,
+        "reward_mean": -1175.14,
+        "loss_mean": 0.012598366849124432,
+        "points_mean": 2.22,
+        "steps_mean": 499.16,
+        "estimated_time": 10298.68401813507
+    },
+    "episode_1450": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 236,
+        "reward_mean": -1290.9,
+        "loss_mean": 0.8548220886709168,
+        "points_mean": 2.18,
+        "steps_mean": 590.9,
+        "estimated_time": 10645.113096475601
+    },
+    "episode_1500": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 42,
+        "reward_mean": -1262.7,
+        "loss_mean": 1.8644835289800539,
+        "points_mean": 2.16,
+        "steps_mean": 540.7,
+        "estimated_time": 10962.09486746788
+    },
+    "episode_1550": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 736,
+        "reward_mean": -1308.22,
+        "loss_mean": 1.2260459974466358,
+        "points_mean": 2.12,
+        "steps_mean": 542.22,
+        "estimated_time": 11280.102464437485
+    },
+    "episode_1600": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1552,
+        "reward_mean": -1170.78,
+        "loss_mean": 1.2902168054645882,
+        "points_mean": 2.22,
+        "steps_mean": 494.8,
+        "estimated_time": 11570.729729652405
+    },
+    "episode_1650": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 804,
+        "reward_mean": -1364.84,
+        "loss_mean": 1.224204535044264,
+        "points_mean": 2.12,
+        "steps_mean": 598.84,
+        "estimated_time": 11922.535437583923
+    },
+    "episode_1700": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 169,
+        "reward_mean": -1317.48,
+        "loss_mean": 1.3547510642465204,
+        "points_mean": 2.24,
+        "steps_mean": 643.52,
+        "estimated_time": 12300.198149681091
+    },
+    "episode_1750": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 982,
+        "reward_mean": -1256.92,
+        "loss_mean": 2.9683625356969423,
+        "points_mean": 2.24,
+        "steps_mean": 602.94,
+        "estimated_time": 12654.010057926178
+    },
+    "episode_1800": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 716,
+        "reward_mean": -1168.5,
+        "loss_mean": 0.018021686607971786,
+        "points_mean": 2.22,
+        "steps_mean": 492.52,
+        "estimated_time": 12943.094796180725
+    },
+    "episode_1850": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 669,
+        "reward_mean": -1390.32,
+        "loss_mean": 0.5094573750020936,
+        "points_mean": 2.16,
+        "steps_mean": 628.36,
+        "estimated_time": 13311.629482030869
+    },
+    "episode_1900": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 71,
+        "reward_mean": -1402.22,
+        "loss_mean": 1.291135786322411,
+        "points_mean": 2.26,
+        "steps_mean": 730.28,
+        "estimated_time": 13739.98555111885
+    },
+    "episode_1950": {
+        "epsilon": 0.4,
+        "points": 3,
+        "steps": 500,
+        "reward_mean": -1193.92,
+        "loss_mean": 1.9162943945871667,
+        "points_mean": 2.28,
+        "steps_mean": 563.96,
+        "estimated_time": 14072.006388902664
+    },
+    "episode_2000": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 1868,
+        "reward_mean": -1271.36,
+        "loss_mean": 0.5870471519324929,
+        "points_mean": 2.2,
+        "steps_mean": 593.36,
+        "estimated_time": 14421.761839151382
+    },
+    "episode_2050": {
+        "epsilon": 0.4,
+        "points": 2,
+        "steps": 522,
+        "reward_mean": -1206.46,
+        "loss_mean": 1.070629765309859,
+        "points_mean": 2.22,
+        "steps_mean": 530.48,
+        "estimated_time": 14734.2132294178
+    }
+}

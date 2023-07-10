@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import copy
+import logging
 
 ##################################
 # Deep Q-Network
@@ -12,14 +13,13 @@ import copy
 
 
 class DQN(nn.Module):
-    def __init__(self, in_channels=1, num_actions=4, input_size=84, device='cpu'):
+    def __init__(self, in_channels=1, num_actions=4, input_size=84):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.input_size = self.compute_conv_output_size(input_size)
         self.fc = nn.Linear(64*self.input_size*self.input_size, 256)
         self.out = nn.Linear(256, num_actions)
-        self.device = device
 
     def forward(self, states):
         x = F.relu(self.conv1(states))
@@ -40,6 +40,8 @@ class DQN(nn.Module):
             else:
                 nn.init.uniform_(param, 0.1, 0.2)
     
+    def device(self):
+        return next(self.parameters()).device
 
 
 
@@ -65,6 +67,7 @@ class SnakeEnv():
         self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
         self.num_actions = len(self.actions)
         self.body = []
+        self.points = 1
         
     def reset(self):
         """
@@ -73,6 +76,7 @@ class SnakeEnv():
         self.current_state = self.start
         self.body = []
         self.done = False
+        self.points = 1
         
     def single_step(self, state, action):
         """
@@ -109,9 +113,10 @@ class SnakeEnv():
             S_new[1] = self.Lx - 1
 
         elif np.all(S_new[:2] == S_new[2:]):
-            self.done = True       
+            # self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
+            self.points += 1 # if we eat the food we have a level of 1
             new_segment = self.body[-1] if len(self.body) > 0 else S_new[:2]
             self.body.append(new_segment)
         
@@ -119,6 +124,8 @@ class SnakeEnv():
         self.current_state = S_new[:2]
         return S_new, reward, self.done
     
+    def get_points(self):
+        return self.points
 
 
     def get_image(self,state):
@@ -155,7 +162,8 @@ class SnakeEnv():
         else:
             # input is a tensor of floats
             images = self.get_image(state[0]) 
-            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(model.device)
+            logging.debug(f"model.device: {model.device()}")
+            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(model.device())
 
             qs = model(input).cpu().data.numpy()
             return np.argmax(qs) 

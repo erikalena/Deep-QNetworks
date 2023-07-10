@@ -11,19 +11,20 @@ import logging
 from tqdm import tqdm
 import json
 import os
+import datetime
 
 
 @dataclass
 class Config:
-    device: str = "cuda:0" if torch.cuda.is_available() else "cpu"
-    batch_size: int = 128  # Size of batch taken from replay buffer
+    current_time:str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    device: str = "cuda" if torch.cuda.is_available() else "cpu"
+    batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
     env_size_y: int = 20
-    max_steps_per_episode: int = 5000
+    max_steps_per_episode: int = 10000
     max_num_episodes: int = 5000
-    update_after_actions: int = 4
     epsilon: float = 1.0
-    epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
+    epsilon_min: float = 0.4  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
@@ -34,11 +35,13 @@ class Config:
     output_filename: str = "log.json"
     output_logdir: str = "results"
     output_checkpoint_dir: str = "checkpoints"
+    save_step: int = 50  # Save model every 100 episodes and log results
+    logging_level: int = logging.INFO
 
 
 CONFIG = Config()
 # logging
-logging.basicConfig(level=logging.INFO)
+
 
 
 def train_step(states, actions, rewards, next_states, dones, discount):
@@ -97,6 +100,8 @@ def dqn_learning(env, filename):
     cur_frame = 0
     last_100_ep_rewards = []  #!! Why do not reset to each episode?
     last_100_losses = []  #!! Added for tracking losses
+    last_100_points = []  #!! Added for tracking points
+    last_100_steps = []  #!! Added for tracking steps
 
     # print all configuration of file
     # open file
@@ -124,7 +129,6 @@ def dqn_learning(env, filename):
 
         # done = False
         timestep = 0
-        accumulated_loss = 0
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
@@ -162,27 +166,43 @@ def dqn_learning(env, filename):
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
                 epsilon = max(epsilon, CONFIG.epsilon_min)
+                
+            if done:
+                break
 
-
-
-        if len(last_100_ep_rewards) == 100:
+        if len(last_100_ep_rewards) == CONFIG.save_step:
             last_100_ep_rewards = last_100_ep_rewards[1:]
         last_100_ep_rewards.append(episode_reward)
         running_reward = np.mean(last_100_ep_rewards)
 
-        if len(last_100_losses) == 100:
+        if len(last_100_losses) == CONFIG.save_step:
             last_100_losses = last_100_losses[1:]
         last_100_losses.append(loss.item())
         running_loss = np.mean(last_100_losses)
+        
+        if len(last_100_points) == CONFIG.save_step:
+            last_100_points = last_100_points[1:]
+        last_100_points.append(env.get_points())
+        running_points = np.mean(last_100_points)
+        
+        if len(last_100_steps) == CONFIG.save_step:
+            last_100_steps = last_100_steps[1:]
+        last_100_steps.append(timestep)
+        running_steps = np.mean(last_100_steps)
 
-        if episode % 100 == 0:
+        if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
+            logging.info(f"\n Saving results at episode {episode}")
             file = json.load(open(filename))
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
-                "reward": running_reward,
-                "loss": running_loss,
+                "points": env.get_points(),
+                "steps" : timestep,
+                "reward_mean": running_reward,
+                "loss_mean": running_loss,
+                "points_mean": running_points,
+                "steps_mean": running_steps,
                 "estimated_time": pbar.format_dict["elapsed"],
             }
             json.dump(file, open(filename, "w"), indent=4)
@@ -205,66 +225,122 @@ if __name__ == "__main__":
     # read input arguments
     parser = argparse.ArgumentParser()
     parser = argparse.ArgumentParser(description="Deep Q-Network Snake")
-    parser.add_argument("--size", type=int, default=20, help="Size of the environment")
     parser.add_argument(
-        "--episodes", type=int, default=10000, help="Number of episodes"
-    )
-    parser.add_argument("--batch_size", type=int, default=32, help="Size of the batch")
-    parser.add_argument(
-        "--max_steps", type=int, default=5000, help="Max steps per episode"
+        "--Lx", type=int, default=CONFIG.env_size_x, help="Size x of the environment"
     )
     parser.add_argument(
-        "--update_after", type=int, default=4, help="Update after actions"
-    )
-    parser.add_argument("--epsilon", type=float, default=1.0, help="Epsilon value")
-    parser.add_argument(
-        "--epsilon_min", type=float, default=0.1, help="Minimum epsilon value"
+        "--Ly", type=int, default=CONFIG.env_size_y, help="Size y of the environment"
     )
     parser.add_argument(
-        "--epsilon_max", type=float, default=1.0, help="Maximum epsilon value"
+        "--episodes",
+        type=int,
+        default=CONFIG.max_num_episodes,
+        help="Number of episodes",
     )
     parser.add_argument(
-        "--update_target", type=int, default=10000, help="Update target network"
+        "--batch_size", type=int, default=CONFIG.batch_size, help="Size of the batch"
+    )
+    parser.add_argument(
+        "--max_steps",
+        type=int,
+        default=CONFIG.max_steps_per_episode,
+        help="Max steps per episode",
+    )
+    parser.add_argument(
+        "--update_after",
+        type=int,
+        default=CONFIG.update_after_actions,
+        help="Update after actions",
+    )
+    parser.add_argument(
+        "--epsilon", type=float, default=CONFIG.epsilon, help="Epsilon value"
+    )
+    parser.add_argument(
+        "--epsilon_min",
+        type=float,
+        default=CONFIG.epsilon_min,
+        help="Minimum epsilon value",
+    )
+    parser.add_argument(
+        "--epsilon_max",
+        type=float,
+        default=CONFIG.epsilon_max,
+        help="Maximum epsilon value",
+    )
+    parser.add_argument(
+        "--update_target",
+        type=int,
+        default=CONFIG.update_target_network,
+        help="Update target network",
     )
     parser.add_argument(
         "--epsilon_random_frames",
         type=int,
-        default=50000,
+        default=CONFIG.epsilon_random_frames,
         help="Number of random frames",
     )
     parser.add_argument(
         "--epsilon_greedy_frames",
         type=float,
-        default=100000.0,
+        default=CONFIG.epsilon_greedy_frames,
         help="Number of greedy frames",
     )
     parser.add_argument(
-        "--output_log_dir", type=str, default="results", help="Output directory"
+        "--output_log_dir",
+        type=str,
+        default=CONFIG.output_logdir,
+        help="Output directory",
     )
     parser.add_argument(
         "--output_checkpoint_dir",
         type=str,
-        default="checkpoints",
+        default=CONFIG.output_checkpoint_dir,
         help="Output directory for checkpoints",
+    )
+    parser.add_argument(
+        "--debug", type=bool, default=False, help="Debug mode (default: False)"
     )
 
     args = parser.parse_args()
 
-    # Update the configuration values
-    CONFIG.env_size_x = args.size
-    CONFIG.env_size_y = args.size
-    CONFIG.max_num_episodes = args.episodes
-    CONFIG.batch_size = args.batch_size
-    CONFIG.max_steps_per_episode = args.max_steps
-    CONFIG.update_after_actions = args.update_after
-    CONFIG.epsilon = args.epsilon
-    CONFIG.epsilon_min = args.epsilon_min
-    CONFIG.epsilon_max = args.epsilon_max
-    CONFIG.update_target_network = args.update_target
-    CONFIG.epsilon_random_frames = args.epsilon_random_frames
-    CONFIG.epsilon_greedy_frames = args.epsilon_greedy_frames
-    CONFIG.output_logdir = args.output_log_dir
-    CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
+    CONFIG = Config(
+        current_time=datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        logging_level=logging.DEBUG if args.debug else CONFIG.logging_level,
+        env_size_x=args.Lx,
+        env_size_y=args.Ly,
+        max_num_episodes=args.episodes,
+        batch_size=args.batch_size,
+        max_steps_per_episode=args.max_steps,
+        update_after_actions=args.update_after,
+        epsilon=args.epsilon,
+        epsilon_min=args.epsilon_min,
+        epsilon_max=args.epsilon_max,
+        update_target_network=args.update_target,
+        epsilon_random_frames=args.epsilon_random_frames,
+        epsilon_greedy_frames=args.epsilon_greedy_frames,
+        output_logdir=args.output_log_dir,
+        output_checkpoint_dir=args.output_checkpoint_dir,
+    )
+
+
+
+    # # Update the configuration values
+    # CONFIG.logging_level = logging.DEBUG if args.debug else CONFIG.logging_level
+    # CONFIG.env_size_x = args.Lx
+    # CONFIG.env_size_y = args.Ly
+    # CONFIG.max_num_episodes = args.episodes
+    # CONFIG.batch_size = args.batch_size
+    # CONFIG.max_steps_per_episode = args.max_steps
+    # CONFIG.update_after_actions = args.update_after
+    # CONFIG.epsilon = args.epsilon
+    # CONFIG.epsilon_min = args.epsilon_min
+    # CONFIG.epsilon_max = args.epsilon_max
+    # CONFIG.update_target_network = args.update_target
+    # CONFIG.epsilon_random_frames = args.epsilon_random_frames
+    # CONFIG.epsilon_greedy_frames = args.epsilon_greedy_frames
+    # CONFIG.output_logdir = args.output_log_dir
+    # CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
+    logging.basicConfig(level=CONFIG.logging_level)
 
     logging.info(f"Start training with configuration: {CONFIG}")
     # make directory for checkpoints and results
@@ -276,8 +352,13 @@ if __name__ == "__main__":
     model = DQN(in_channels=1, num_actions=env.num_actions, input_size=env.Lx)
     model_target = DQN(in_channels=1, num_actions=env.num_actions, input_size=env.Lx)
 
-    model.to(CONFIG.device)
-    model_target.to(CONFIG.device)
+    logging.debug(f"main, dqn_script: CONFIG.device: {CONFIG.device}")
+
+    model = model.to(CONFIG.device)
+    model_target = model_target.to(CONFIG.device)
+    logging.debug(
+        f"main, dqn_script: model.device: {model.device()}, model_target.device: {model_target.device()}"
+    )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.00025)
     loss_function = nn.HuberLoss()
