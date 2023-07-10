@@ -5,13 +5,14 @@ import sys
 import pickle
 from qlearning import *
 from qnetworks import *
+from deep_qnetworks import *
 import torch
 
 
 
 class game():
 
-    def __init__(self, policy=None, model_path=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
+    def __init__(self, policy=None, model_path=None, type=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
 
         self.delay = delay
         self.score = 0
@@ -36,11 +37,18 @@ class game():
         self.header = turtle.Turtle()
 
         self.policy = policy
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # if a model is specified, we use it to play the game
-        if model_path != None:
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            model = QLearnNN(4,4).to(device) #   QNetwork(4, 4, 42)
+        if model_path != None and type == 'cnn':
+            self.Lx = self.Ly = int(self.game_width/10)
+            model = DQN(in_channels =1, num_actions=4, input_size=self.Lx, device=self.device)
+            model.load_state_dict(torch.load(model_path))
+            model.eval()
+            self.model = model
+            self.type = 'cnn'
+        elif model_path != None:
+            model = QLearnNN(4,4).to(self.device) #   QNetwork(4, 4, 42)
             model.load_state_dict(torch.load(model_path))
             model.eval()
             self.model = model
@@ -138,7 +146,14 @@ class game():
         goal_x = self.food.xcor()/ self.screen_width
         goal_y = self.food.ycor()/ self.screen_height
 
-        input = torch.tensor([y,x,goal_y, goal_x]).unsqueeze(0)
+        state = [y,x,goal_y, goal_x]
+
+        if self.type == 'cnn':
+            input = self.get_image(state)
+            input = torch.tensor(input).unsqueeze(0).unsqueeze(0).to(self.device)
+        else:
+            input = torch.tensor(state).unsqueeze(0).to(self.device)
+
         action = self.model(input.float())
         action = torch.argmax(action).item()
 
@@ -154,6 +169,30 @@ class game():
         wall = self.move()
 
         return wall
+
+    def get_image(self, state):
+        """
+        Represent the game as an image, state input is a tuple of 4 elements
+        (x,y,x_food,y_food)
+        """
+        image = np.zeros((self.Lx,self.Ly))
+
+        if state[2] >= 0 and state[2] < self.Lx and state[3] >= 0 and state[3] < self.Ly:
+            image[int(state[2]), int(state[3])] = .5
+
+        if state[0] >= 0 and state[0] < self.Lx and state[1] >= 0 and state[1] < self.Ly:
+            image[int(state[0]), int(state[1])] = 1
+        else:
+            # if the agent is out of the world, it is dead and so we cancel the food as well
+            # this check is just for safety reasons, if we allow the snake to go through the walls
+            # this should never happen
+            image[int(state[2]), int(state[3])] = 0 
+            
+        for i in range(len(self.body)):
+            if self.body[i][0] >= 0 and self.body[i][0] < self.Lx and self.body[i][1] >= 0 and self.body[i][1] < self.Ly:
+                image[int(self.body[i][0]), int(self.body[i][1])] = .1
+            
+        return image
 
     def play(self):
     

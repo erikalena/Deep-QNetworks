@@ -31,7 +31,6 @@ if __name__ == "__main__":
         wn.onkeypress(game.go_up, 'Up')
         wn.onkeypress(game.go_down, 'Down')
 
-        print('here')
         # Main game loop
         game.play()
 
@@ -52,5 +51,10 @@ if __name__ == "__main__":
 
     elif mode == 2:
         game = game(step=3, delay=0.2, model_path='qlearnNN.pt') #model_path='qlearn_snake_model.pt')
+        wn = game.create_environment()
+        game.play()
+
+    elif mode == 3:
+        game = game(step=3, delay=0.2, model_path='dqn.pt', type='cnn')
         wn = game.create_environment()
         game.play()
