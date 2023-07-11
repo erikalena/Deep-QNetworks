@@ -32,6 +32,8 @@ class game():
         turtle.setworldcoordinates(0, self.game_height, self.game_width, 0)
         self.wn = turtle.Screen()
         self.snake = turtle.Turtle()
+              
+       
         self.body = []
         self.food = turtle.Turtle()
         self.header = turtle.Turtle()
@@ -42,9 +44,10 @@ class game():
         # if a model is specified, we use it to play the game
         if model_path != None and type == 'cnn':
             self.Lx = self.Ly = int(self.game_width/10)
-            model = DQN(in_channels =1, num_actions=4, input_size=self.Lx, device=self.device)
-            model.load_state_dict(torch.load(model_path))
+            model = DQN(in_channels =1, num_actions=4, input_size=self.Lx)
+            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             model.eval()
+            model.to(self.device)
             self.model = model
             self.type = 'cnn'
         elif model_path != None:
@@ -139,19 +142,24 @@ class game():
     def follow_model(self):
         wall = False
         
-        # x,y are normlized coordinates
-        x = self.snake.xcor()/ self.screen_width
-        y = self.snake.ycor()/ self.screen_height
-     
-        goal_x = self.food.xcor()/ self.screen_width
-        goal_y = self.food.ycor()/ self.screen_height
-
-        state = [y,x,goal_y, goal_x]
-
+    
         if self.type == 'cnn':
+            x = int(self.snake.xcor()*self.Lx/self.screen_width)
+            y = int(self.snake.ycor()*self.Ly/self.screen_height)
+            goal_x = int(self.food.xcor()*self.Lx/self.screen_width)
+            goal_y = int(self.food.ycor()*self.Ly/self.screen_height)
+            state = [y,x,goal_y, goal_x]
             input = self.get_image(state)
             input = torch.tensor(input).unsqueeze(0).unsqueeze(0).to(self.device)
         else:
+            # x,y are normlized coordinates
+            x = self.snake.xcor()/ self.screen_width
+            y = self.snake.ycor()/ self.screen_height
+        
+            goal_x = self.food.xcor()/ self.screen_width
+            goal_y = self.food.ycor()/ self.screen_height
+
+            state = [y,x,goal_y, goal_x]
             input = torch.tensor(state).unsqueeze(0).to(self.device)
 
         action = self.model(input.float())
@@ -195,7 +203,7 @@ class game():
         return image
 
     def play(self):
-    
+
         # Main game loop
         while True:
             self.wn.update()

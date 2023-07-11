@@ -190,6 +190,10 @@ def dqn_learning(env, filename):
         last_100_steps.append(timestep)
         running_steps = np.mean(last_100_steps)
 
+        """ if episode % 100 == 0:
+            epsilon -= 0.025
+            epsilon = max(epsilon, CONFIG.epsilon_min) """
+
         if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
