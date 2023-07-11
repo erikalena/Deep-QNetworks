@@ -403,7 +403,7 @@ def get_image(state, body, config):
         ):
             image[int(body[i][0]), int(body[i][1])] = 1
 
-    logging.debug(f"image.shape: {image.shape}")
+
     return image
 
 

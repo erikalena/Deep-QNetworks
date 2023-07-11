@@ -86,13 +86,13 @@ def compute_targets_and_loss(
             get_image(next_state, new_body, CONFIG)
             for next_state, new_body in zip(next_states, new_bodies)  # type: ignore
         ]
-        logging.debug(f"compute_targets_and_loss: images.shape: {np.array(images).shape}")
+
     input = (
         torch.as_tensor(np.array(images), dtype=torch.float32)
         .unsqueeze(1)
         .to(CONFIG.device)
     )
-    logging.debug(f"compute_targets_and_loss: input.shape: {input.shape}")
+
     max_next_qs = model_target(input).max(-1).values
 
     # if the next state is terminal, then the Q-value is just the reward
@@ -110,7 +110,7 @@ def compute_targets_and_loss(
         .unsqueeze(1)
         .to(CONFIG.device)
     )
-    logging.debug(f"compute_targets_and_loss: input.shape: {input.shape}")
+
     qs = model(input)
 
     # for each state, we update ONLY the Q-value of the action that was taken
