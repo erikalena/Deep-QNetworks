@@ -16,7 +16,7 @@ import datetime
 
 @dataclass
 class Config:
-    current_time:str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    current_time: str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
@@ -42,7 +42,6 @@ class Config:
 
 CONFIG = Config()
 # logging
-
 
 
 def train_step(states, actions, rewards, next_states, dones, discount):
@@ -131,6 +130,7 @@ def dqn_learning(env, filename):
 
         # done = False
         timestep = 0
+        accumulated_loss = 0
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
@@ -156,7 +156,7 @@ def dqn_learning(env, filename):
                 loss = train_step(
                     states, actions, rewards, next_states, dones, discount=0.99
                 )
-
+                accumulated_loss += loss.item()
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
                 model_target.load_state_dict(model.state_dict())
@@ -168,7 +168,7 @@ def dqn_learning(env, filename):
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
                 epsilon = max(epsilon, CONFIG.epsilon_min)
-                
+
             if done:
                 break
 
@@ -179,14 +179,14 @@ def dqn_learning(env, filename):
 
         if len(last_100_losses) == CONFIG.save_step:
             last_100_losses = last_100_losses[1:]
-        last_100_losses.append(loss.item())
+        last_100_losses.append(accumulated_loss / timestep)
         running_loss = np.mean(last_100_losses)
-        
+
         if len(last_100_points) == CONFIG.save_step:
             last_100_points = last_100_points[1:]
         last_100_points.append(env.get_points())
         running_points = np.mean(last_100_points)
-        
+
         if len(last_100_steps) == CONFIG.save_step:
             last_100_steps = last_100_steps[1:]
         last_100_steps.append(timestep)
@@ -204,7 +204,7 @@ def dqn_learning(env, filename):
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
                 "points": env.get_points(),
-                "steps" : timestep,
+                "steps": timestep,
                 "steps_per_point": env.n_steps_per_point,
                 "reward_mean": running_reward,
                 "loss_mean": running_loss,
@@ -330,9 +330,8 @@ if __name__ == "__main__":
         epsilon_greedy_frames=args.epsilon_greedy_frames,
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
-        description=args.desc,
+        description="Serial DQN:" + args.desc,
     )
-
 
     logging.basicConfig(level=CONFIG.logging_level)
 
