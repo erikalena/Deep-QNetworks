@@ -334,23 +334,6 @@ if __name__ == "__main__":
     )
 
 
-
-    # # Update the configuration values
-    # CONFIG.logging_level = logging.DEBUG if args.debug else CONFIG.logging_level
-    # CONFIG.env_size_x = args.Lx
-    # CONFIG.env_size_y = args.Ly
-    # CONFIG.max_num_episodes = args.episodes
-    # CONFIG.batch_size = args.batch_size
-    # CONFIG.max_steps_per_episode = args.max_steps
-    # CONFIG.update_after_actions = args.update_after
-    # CONFIG.epsilon = args.epsilon
-    # CONFIG.epsilon_min = args.epsilon_min
-    # CONFIG.epsilon_max = args.epsilon_max
-    # CONFIG.update_target_network = args.update_target
-    # CONFIG.epsilon_random_frames = args.epsilon_random_frames
-    # CONFIG.epsilon_greedy_frames = args.epsilon_greedy_frames
-    # CONFIG.output_logdir = args.output_log_dir
-    # CONFIG.output_checkpoint_dir = args.output_checkpoint_dir
     logging.basicConfig(level=CONFIG.logging_level)
 
     logging.info(f"Start training with configuration: {CONFIG}")
