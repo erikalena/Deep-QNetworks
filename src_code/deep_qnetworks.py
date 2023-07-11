@@ -67,7 +67,9 @@ class SnakeEnv():
         self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
         self.num_actions = len(self.actions)
         self.body = []
-        self.points = 1
+        self.points = 0
+        self.n_steps_per_point = []
+        self.number_of_steps = 0
         
     def reset(self):
         """
@@ -77,11 +79,14 @@ class SnakeEnv():
         self.body = []
         self.done = False
         self.points = 1
+        self.n_steps_per_point = []
+        self.number_of_steps = 0
         
     def single_step(self, state, action):
         """
         Evolves the environment given action A and current state.
         """
+        self.number_of_steps += 1
         a = self.actions[action] # action is an integer in [0,1,2,3]
         S_new = copy.deepcopy(state)
         S_new[:2] += a
@@ -93,6 +98,7 @@ class SnakeEnv():
         if S_new[:2] in self.body:
             self.done = True
             reward = -1000
+            self.n_steps_per_point.append(self.number_of_steps)
 
         # update all the body segments in reverse order
         for i in range(len(self.body)-1,0,-1):
@@ -119,6 +125,8 @@ class SnakeEnv():
             self.points += 1 # if we eat the food we have a level of 1
             new_segment = self.body[-1] if len(self.body) > 0 else S_new[:2]
             self.body.append(new_segment)
+            self.n_steps_per_point.append(self.number_of_steps)
+            self.number_of_steps = 0
         
         # change the current position
         self.current_state = S_new[:2]

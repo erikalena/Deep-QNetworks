@@ -24,7 +24,7 @@ class Config:
     max_steps_per_episode: int = 10000
     max_num_episodes: int = 5000
     epsilon: float = 1.0
-    epsilon_min: float = 0.4  # Minimum epsilon greedy parameter
+    epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
@@ -37,6 +37,7 @@ class Config:
     output_checkpoint_dir: str = "checkpoints"
     save_step: int = 50  # Save model every 100 episodes and log results
     logging_level: int = logging.INFO
+    description: str = "Deep Q-Network Snake, done after snake eats itself"
 
 
 CONFIG = Config()
@@ -102,6 +103,7 @@ def dqn_learning(env, filename):
     last_100_losses = []  #!! Added for tracking losses
     last_100_points = []  #!! Added for tracking points
     last_100_steps = []  #!! Added for tracking steps
+    last_100_steps_per_point = []  #!! Added for tracking steps per point
 
     # print all configuration of file
     # open file
@@ -190,6 +192,8 @@ def dqn_learning(env, filename):
         last_100_steps.append(timestep)
         running_steps = np.mean(last_100_steps)
 
+    
+
         if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
@@ -199,6 +203,7 @@ def dqn_learning(env, filename):
                 "epsilon": epsilon,
                 "points": env.get_points(),
                 "steps" : timestep,
+                "steps_per_point": env.n_steps_per_point,
                 "reward_mean": running_reward,
                 "loss_mean": running_loss,
                 "points_mean": running_points,
@@ -300,6 +305,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--debug", type=bool, default=False, help="Debug mode (default: False)"
     )
+    parser.add_argument(
+        "--desc", type=str, default=CONFIG.description, help="Description of the run"
+    )
 
     args = parser.parse_args()
 
@@ -320,6 +328,7 @@ if __name__ == "__main__":
         epsilon_greedy_frames=args.epsilon_greedy_frames,
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
+        description=args.desc,
     )
 
 
