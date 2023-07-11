@@ -143,7 +143,7 @@ class SnakeEnv():
         """
         image = np.zeros((self.Lx,self.Ly))
         if state[2] >= 0 and state[2] < self.Lx and state[3] >= 0 and state[3] < self.Ly:
-            image[int(state[2]), int(state[3])] = 1
+            image[int(state[2]), int(state[3])] = .5
 
         if state[0] >= 0 and state[0] < self.Lx and state[1] >= 0 and state[1] < self.Ly:
             image[int(state[0]), int(state[1])] = 1
@@ -155,7 +155,7 @@ class SnakeEnv():
             
         for i in range(len(self.body)):
             if self.body[i][0] >= 0 and self.body[i][0] < self.Lx and self.body[i][1] >= 0 and self.body[i][1] < self.Ly:
-                image[int(self.body[i][0]), int(self.body[i][1])] = 1
+                image[int(self.body[i][0]), int(self.body[i][1])] = .1
             
         return image
 

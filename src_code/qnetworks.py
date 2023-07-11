@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from src_code.qlearning import *
+from qlearning import *
 from torch.utils.data import DataLoader
 from collections import deque
 
