@@ -196,7 +196,93 @@ class SnakeEnv(gym.Env):
                 image[int(self.body[i][0]), int(self.body[i][1])] = 1
             
         return image
+    
+
+#####################
+# Agent
+#####################
+class SnakeAgent:
+    def __init__(
+        self,
+        learning_rate: float,
+        initial_epsilon: float,
+        epsilon_decay: float,
+        final_epsilon: float,
+        env: gym.Env,
+        discount_factor: float = 0.95,
+        size: tuple[int, int] = (20, 20),
+    ):
+        """Initialize a Reinforcement Learning agent with an empty dictionary
+        of state-action values (q_values), a learning rate and an epsilon.
+
+        Args:
+            learning_rate: The learning rate
+            initial_epsilon: The initial epsilon value
+            epsilon_decay: The decay for epsilon
+            final_epsilon: The final epsilon value
+            discount_factor: The discount factor for computing the Q-value
+        """
+        self.model = DQN(in_channels =1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
+        self.model_target = DQN(in_channels = 1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
 
 
+        self.lr = learning_rate
+        self.discount_factor = discount_factor
+
+        self.epsilon = initial_epsilon
+        self.epsilon_decay = epsilon_decay
+        self.final_epsilon = final_epsilon
+
+        self.training_error = []
+
+        self.size = size
+        
+        self.env = env
+
+    def get_image(self, state, body):
+        """
+        Represent the game as an image, state input is a tuple of 4 elements
+        (x,y,x_food,y_food)
+        """
+        image = np.zeros((self.size[0],self.size[1]))
+        if state[2] >= 0 and state[2] < self.size[0] and state[3] >= 0 and state[3] < self.size[1]:
+            image[int(state[2]), int(state[3])] = 1
+
+        if state[0] >= 0 and state[0] < self.size[0] and state[1] >= 0 and state[1] < self.size[1]:
+            image[int(state[0]), int(state[1])] = 1
+        else:
+            # if the agent is out of the world, it is dead and so we cancel the food as well
+            # this check is just for safety reasons, if we allow the snake to go through the walls
+            # this should never happen
+            image[int(state[2]), int(state[3])] = 0 
+            
+        for i in range(len(body)):
+            if body[i][0] >= 0 and body[i][0] < self.size[0] and body[i][1] >= 0 and body[i][1] < self.size[1]:
+                image[int(body[i][0]), int(body[i][1])] = 1
+        return image
+            
+        
+
+    def get_action(self, state, body) -> int:
+        """
+        Returns the best action with probability (1 - epsilon)
+        otherwise a random action with probability epsilon to ensure exploration.
+        """
+        # with probability epsilon return a random action to explore the environment
+        if np.random.random() < self.epsilon:
+            return self.env.action_space.sample()
+
+        # with probability (1 - epsilon) act greedily (exploit)
+        else:
+            # input is a tensor of floats
+            images = self.get_image(state, body) 
+            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.model.device)
+            qs = self.model(input).cpu().data.numpy()
+            return np.argmax(qs)
+            
+
+
+    def decay_epsilon(self):
+        self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
     
     
