@@ -4,7 +4,6 @@ import matplotlib
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pygame
 import gymnasium as gym
 from gymnasium import spaces
 import copy

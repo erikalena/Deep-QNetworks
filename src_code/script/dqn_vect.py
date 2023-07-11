@@ -61,11 +61,11 @@ def get_image(state, body):
     Represent the game as an image, state input is a tuple of 4 elements
     (x,y,x_food,y_food)
     """
-    image = np.zeros((Lx, Ly))
-    if state[2] >= 0 and state[2] < Lx and state[3] >= 0 and state[3] < Ly:
+    image = np.zeros((CONFIG.env_size_x, CONFIG.env_size_y))
+    if state[2] >= 0 and state[2] < CONFIG.env_size_x and state[3] >= 0 and state[3] < CONFIG.env_size_y:
         image[int(state[2]), int(state[3])] = 1
 
-    if state[0] >= 0 and state[0] < Lx and state[1] >= 0 and state[1] < Ly:
+    if state[0] >= 0 and state[0] < CONFIG.env_size_x and state[1] >= 0 and state[1] < CONFIG.env_size_y:
         image[int(state[0]), int(state[1])] = 1
     else:
         # if the agent is out of the world, it is dead and so we cancel the food as well
@@ -74,7 +74,7 @@ def get_image(state, body):
         image[int(state[2]), int(state[3])] = 0
 
     for i in range(len(body)):
-        if body[i][0] >= 0 and body[i][0] < Lx and body[i][1] >= 0 and body[i][1] < Ly:
+        if body[i][0] >= 0 and body[i][0] < CONFIG.env_size_x and body[i][1] >= 0 and body[i][1] < CONFIG.env_size_y:
             image[int(body[i][0]), int(body[i][1])] = 1
 
     return image
@@ -233,7 +233,7 @@ def dqn_learning_vectorized(env, filename):
                     new_bodies,
                     discount=0.99,
                 )
-            accumulated_loss += loss.item()
+                accumulated_loss += loss.item()
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
                 model_target.load_state_dict(model.state_dict())
