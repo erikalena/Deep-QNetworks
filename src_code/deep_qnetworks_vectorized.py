@@ -50,54 +50,89 @@ class DQN(nn.Module):
 # Environment
 ##################################
 
-class SnakeEnv(gym.vector.VectorEnv):
+class SnakeEnv(gym.Env):
 
-    def __init__(self, Lx, Ly, start = None, end = None):
+    metadata = {"render_modes": ["wb_array"], "render_fps": 4}
+    
+    def __init__(self, size, render_mode = "wb_array"):
         
         # World shape
-        self.Ly, self.Lx = Lx, Ly
+        self.Ly, self.Lx = size
         #self.observation_space = spaces.Box(low=0, high=3, shape=[Lx, Ly])
         # start and end positions
-        self.start = [0,0] if start is None else start
-        self.end = None if end is None else end
-        self.current_state = self.start
-        self.state_in = None
         
+
+        self.observation_space = spaces.Dict(
+            {
+                "agent": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int),
+                "target": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int),
+            }
+        )
+        
+        self.start = [0,0]
+        self.end = None
+        #self.start = [0,0] if start is None else start
+        #self.end = None if end is None else end # temporary, we don't want it to be unbounded
+        #self._agent_location = self.start
+        #self._target_location = self.start # temporary
+        self.body = []
+
         self.done = False
 
         # space of actions  [Down,  Up,  Right,Left]
-        #self.action_space = spaces.Discrete(4) 
-        self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
-        self.num_actions = len(self.actions)
-        self.body = []
-        
-    def set_state_in(self, state_in):
-        self.state_in = state_in
+        self.action_space = spaces.Discrete(4)
+        self._action_to_direction = {
+            0: np.array([1, 0]),
+            1: np.array([-1, 0]),
+            2: np.array([0, 1]),
+            3: np.array([0, -1]),
+        }
 
-    def reset(self):
+        self.num_actions = 4
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+        
+
+    def _get_obs(self):
+        return {"agent": self._agent_location, "target": self._target_location}
+    
+    def _get_info(self):
+        return {"body": self.body}
+        
+    def reset(self,seed=None, options=None):
         """
         Restart snake by setting current state to start
         """
-        self.current_state = self.start
+        super().reset(seed=seed)
+        self._agent_location = [0,0]
+        # We will sample the target's location randomly until it does not coincide with the agent's location
+        self._target_location = self._agent_location
+        while np.array_equal(self._target_location, self._agent_location):
+            self._target_location = self.np_random.integers(
+            np.array([0, 0]), np.array([self.Lx, self.Ly]), size=(2,), dtype=int
+        )
+
         self.body = []
         self.done = False
+        observation = self._get_obs()
+        info = self._get_info() 
+        return observation, info
         
     def step(self, action):
         """
         Evolves the environment given action A and current state.
         """
-        state = self.state_in
-        a = self.actions[action] # action is an integer in [0,1,2,3]
-        
-        S_new = copy.deepcopy(state)
 
-        S_new[:2] += a
+        a = self._action_to_direction[action] # action is an integer in [0,1,2,3]
+
+
+        self._agent_location += a
 
         # add a penalty for moving
         reward = -1
 
         # if the snake eats itself, add penalty 
-        if S_new[:2] in self.body:
+        if self._agent_location in self.body:
             self.done = True
             reward = -1000
 
@@ -107,47 +142,54 @@ class SnakeEnv(gym.vector.VectorEnv):
         
         # update the first segment
         if len(self.body) > 0:
-            self.body[0] = self.current_state
+            self.body[0] = self._agent_location
 
         # If we go out of the world, we enter from the other side
-        if (S_new[0] == self.Ly):
-            S_new[0] = 0
-        elif (S_new[0] == -1):
-            S_new[0] = self.Ly - 1
-        elif (S_new[1] == self.Lx):
-            S_new[1] = 0
-        elif (S_new[1] == -1):
-            S_new[1] = self.Lx - 1
+        if (self._agent_location[0] == self.Ly):
+            self._agent_location[0] = 0
+        elif (self._agent_location[0] == -1):
+            self._agent_location[0] = self.Ly - 1
+        elif (self._agent_location[1] == self.Lx):
+            self._agent_location[1] = 0
+        elif (self._agent_location[1] == -1):
+            self._agent_location[1] = self.Lx - 1
 
-        elif np.all(S_new[:2] == S_new[2:]):
+        
+        elif np.all(self._agent_location == self._target_location): ## this might not work
             self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
-            new_segment = self.body[-1] if len(self.body) > 0 else S_new[:2]
+            new_segment = self.body[-1] if len(self.body) > 0 else self._agent_location
             self.body.append(new_segment)
         
         # change the current position
-        self.current_state = S_new[:2]
-        return S_new, reward, self.done
+        #self._agent_location = S_new[:2]
+        observation = self._get_obs()
+        info = self._get_info()
+
+        return observation, reward, self.done, info, False # I don't knwo what the last False is for, just overriding
     
 
-
-    def get_image(self,state):
+    def render(self):
+        if self.render_mode == "wb_array":
+            return self._render_frame()
+    
+    def _render_frame(self):
         """
         Represent the game as an image, state input is a tuple of 4 elements
         (x,y,x_food,y_food)
         """
         image = np.zeros((self.Lx,self.Ly))
-        if state[2] >= 0 and state[2] < self.Lx and state[3] >= 0 and state[3] < self.Ly:
-            image[int(state[2]), int(state[3])] = 1
+        if self._target_location[0] >= 0 and self._target_location[0] < self.Lx and self._target_location[1] >= 0 and self._target_location[1] < self.Ly:
+            image[int(self._target_location[0]), int(self._target_location[1])] = 1
 
-        if state[0] >= 0 and state[0] < self.Lx and state[1] >= 0 and state[1] < self.Ly:
-            image[int(state[0]), int(state[1])] = 1
+        if self._agent_location[0] >= 0 and self._agent_location[0] < self.Lx and self._agent_location[1] >= 0 and self._agent_location[1] < self.Ly:
+            image[int(self._agent_location[0]), int(self._agent_location[1])] = 1
         else:
             # if the agent is out of the world, it is dead and so we cancel the food as well
             # this check is just for safety reasons, if we allow the snake to go through the walls
             # this should never happen
-            image[int(state[2]), int(state[3])] = 0 
+            image[int(self._target_location[0]), int(self._target_location[1])] = 0 
             
         for i in range(len(self.body)):
             if self.body[i][0] >= 0 and self.body[i][0] < self.Lx and self.body[i][1] >= 0 and self.body[i][1] < self.Ly:
@@ -155,18 +197,6 @@ class SnakeEnv(gym.vector.VectorEnv):
             
         return image
 
-    def select_epsilon_greedy_action(self, model, state, epsilon):
-        """
-        Take random action with probability epsilon, 
-        else take best action.
-        """
-        result = np.random.uniform()
-        if result < epsilon:
-            return np.random.choice(np.arange(self.num_actions)) 
-        else:
-            # input is a tensor of floats
-            images = self.get_image(state[0]) 
-            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(model.device)
 
-            qs = model(input).cpu().data.numpy()
-            return np.argmax(qs)
+    
+    
