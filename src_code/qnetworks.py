@@ -67,7 +67,7 @@ class QLearnNN(nn.Module):
 
 
 
-class ReplayBuffer(object):
+class ReplayBuffer(object):  #! Substituted by SeqReplayBuffer
     """
     Replay buffer to store past experiences that the 
     agent can then use for training the neural network.
