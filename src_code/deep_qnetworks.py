@@ -9,6 +9,9 @@ import logging
 import gymnasium as gym
 from gymnasium import spaces
 
+
+
+
 ##################################
 # Deep Q-Network
 ##################################
@@ -273,7 +276,6 @@ class GymSnakeEnv(gym.Env):
         """
 
         a = self._action_to_direction[action]  # action is an integer in [0,1,2,3]
-
         self._agent_location += a
 
         # add a penalty for moving
@@ -305,7 +307,6 @@ class GymSnakeEnv(gym.Env):
         elif np.all(
             self._agent_location == self._target_location
         ):  ## this might not work
-            self.done = True  #!! Why done if we reach the target?
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
             new_segment = self.body[-1] if len(self.body) > 0 else self._agent_location
@@ -340,7 +341,7 @@ class GymSnakeEnv(gym.Env):
             and self._target_location[1] >= 0
             and self._target_location[1] < self.Ly
         ):
-            image[int(self._target_location[0]), int(self._target_location[1])] = 1
+            image[int(self._target_location[0]), int(self._target_location[1])] = .5
 
         if (
             self._agent_location[0] >= 0
@@ -362,7 +363,7 @@ class GymSnakeEnv(gym.Env):
                 and self.body[i][1] >= 0
                 and self.body[i][1] < self.Ly
             ):
-                image[int(self.body[i][0]), int(self.body[i][1])] = 1
+                image[int(self.body[i][0]), int(self.body[i][1])] = .1
 
         return image
 
@@ -379,7 +380,7 @@ def get_image(state, body, config):
         and state[3] >= 0
         and state[3] < config.env_size_y
     ):
-        image[int(state[2]), int(state[3])] = 1
+        image[int(state[2]), int(state[3])] = .5
 
     if (
         state[0] >= 0
@@ -401,7 +402,7 @@ def get_image(state, body, config):
             and body[i][1] >= 0
             and body[i][1] < config.env_size_y
         ):
-            image[int(body[i][0]), int(body[i][1])] = 1
+            image[int(body[i][0]), int(body[i][1])] = .1
 
 
     return image
