@@ -185,20 +185,36 @@ class game():
         (x,y,x_food,y_food)
         """
         image = np.zeros((self.Lx,self.Ly))
+        head = state[:2]
+        goal = state[2:]
 
-        if state[2] >= 0 and state[2] < self.Lx and state[3] >= 0 and state[3] < self.Ly:
-            image[int(state[2]), int(state[3])] = .5
+        if (
+            goal[0] >= 0 
+            and goal[0] < self.Lx 
+            and goal[1] >= 0 
+            and goal[1] < self.Ly
+        ):
+            image[int(goal[0]), int(goal[1])] = .5
 
-        if state[0] >= 0 and state[0] < self.Lx and state[1] >= 0 and state[1] < self.Ly:
-            image[int(state[0]), int(state[1])] = 1
+        if (
+            head[0] >= 0 
+            and head[0] < self.Lx 
+            and head[1] >= 0 
+            and head[1] < self.Ly
+        ):
+            image[int(head[0]), int(head[1])] = 1
         else:
-            # if the agent is out of the world, it is dead and so we cancel the food as well
+            # if the agent is out of the world, it is dead and so we cancel the food and the body as well
             # this check is just for safety reasons, if we allow the snake to go through the walls
             # this should never happen
-            image[int(state[2]), int(state[3])] = 0 
+            image[int(goal[0]), int(goal[0])] = 0 
             
         for i in range(len(self.body)):
-            if self.body[i][0] >= 0 and self.body[i][0] < self.Lx and self.body[i][1] >= 0 and self.body[i][1] < self.Ly:
+            if (self.body[i][0] >= 0 
+                and self.body[i][0] < self.Lx 
+                and self.body[i][1] >= 0 
+                and self.body[i][1] < self.Ly
+            ):
                 image[int(self.body[i][0]), int(self.body[i][1])] = .1
             
         return image

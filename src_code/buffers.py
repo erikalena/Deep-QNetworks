@@ -20,7 +20,7 @@ class ReplayBuffer(object):
         self.buffer = deque(maxlen=size)
         self.device = device
 
-    def add(self, state, body, action, reward, next_state,next_body,  done):
+    def add(self, state, body, action, reward, next_state, next_body, done):
         self.buffer.append((state, body, action, reward, next_state, next_body, done))
 
     def __len__(self):
