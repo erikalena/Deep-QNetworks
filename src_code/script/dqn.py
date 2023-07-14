@@ -36,9 +36,9 @@ class Config:
     batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
     env_size_y: int = 20
-    num_envs: int = 1
-    max_steps_per_episode: int = 10000
-    max_num_episodes: int = 1000
+    num_envs: int = 2
+    max_steps_per_episode: int = 3000000
+    max_num_episodes: int = 200
     epsilon: float = 1.0
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
@@ -51,7 +51,7 @@ class Config:
     output_filename: str = "log.json"
     output_logdir: str = "results/prova"
     output_checkpoint_dir: str = "checkpoints/prova"
-    save_step: int = 50  # Save model every 100 episodes and log results
+    save_step: int = 1  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
     description: str = "Deep Q-Network Snake, done after snake eats itself"
 
@@ -401,7 +401,7 @@ def vectorized_learning(env, buffer, filename):
             loss=accumulated_loss / timestep, episode_reward=episode_reward
         )
 
-        if episode + 1 % 100 == 0:
+        if episode % 100 == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
             logging.info(f"\n Saving results at episode {episode}")
@@ -415,7 +415,8 @@ def vectorized_learning(env, buffer, filename):
                 "loss_mean": np.mean(statistics.losses),
                 # "points_mean": running_points,
                 # "steps_mean": running_steps,
-                "estimated_time": pbar.format_dict["elapsed"],
+                "elapsed_time": pbar.format_dict["elapsed"],
+                "estimated_time": pbar.format_dict["remaining"],
             }
             json.dump(file, open(filename, "w"), indent=4)
             # Save model
