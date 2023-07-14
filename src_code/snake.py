@@ -5,7 +5,7 @@ import sys
 import pickle
 from qlearning import *
 from qnetworks import *
-from src_code.deep_qnetworks import *
+from deep_qnetworks import *
 import torch
 
 

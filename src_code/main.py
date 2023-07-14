@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     elif mode == 1:
         # read policy from file and play the game using the policy
-        with open('policy.pkl', 'rb') as f:
+        with open('../checkpoint/policy.pkl', 'rb') as f:
             agent = pickle.load(f)
 
             # if error, we exit

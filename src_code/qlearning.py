@@ -113,7 +113,10 @@ class GridWorldEnv():
                 # Initialize 
                 QLearning = Qlearning_TDControl(space_size=self.World.shape, action_size=4, gamma=self.gamma, lr_v=self.lr)
 
-                for _ in range(self.n_episodes):
+                # save number of steps necessary to complete an episode
+                n_steps = np.zeros(self.n_episodes)
+
+                for e in range(self.n_episodes):
                     done = False
 
                     # reset the environment
@@ -123,6 +126,7 @@ class GridWorldEnv():
                     a = QLearning.get_action_epsilon_greedy(s, self.epsilon)
                     act = self.actions[a]
                     
+
                     while not done:
                         # Evolve one step
                         new_s, r, done = self.step(act)
@@ -137,6 +141,7 @@ class GridWorldEnv():
                         
                         a = new_a
                         s = new_s
+                        n_steps[e] += 1
 
                 self.policy[:,:,i*self.Ly+j] = QLearning.greedy_policy().astype(int)    
 
@@ -150,6 +155,8 @@ class GridWorldEnv():
         if save:
             with open('policy.pkl', 'wb') as f:
                 pickle.dump(self, f)
+
+        return n_steps
 
         
     def get_qvalues(self, qlearn, n_episodes, end, start=None):
@@ -234,7 +241,7 @@ class GridWorldEnv():
         j = goal_idx%self.Ly
         goal = [i,j]
 
-        fig, ((ax1), (ax2)) = plt.subplots(2,1)
+        fig, ((ax1), (ax2)) = plt.subplots(1,2)
 
         values = self.values[:,:,goal_idx]
         im1 = ax1.imshow(values, cmap=plt.get_cmap("Spectral")) # type: ignore
@@ -263,6 +270,12 @@ class GridWorldEnv():
             
         U, V = optimal_policy_arrows_QLearning[:,:,1], -optimal_policy_arrows_QLearning[:,:,0]
         q = ax2.quiver(X, Y, U, V, color="black")
+
+        # remove axis ticks
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax2.set_xticks([])
+        ax2.set_yticks([])
 
         plt.show()
 
