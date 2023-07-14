@@ -1,3 +1,5 @@
+# TO DO : ADD NUMBER OF LOOT EATEN
+
 NUM_ENVS = 3
 import sys
 sys.path.insert(0, '/home/alexserra98/uni/r_l/project/Deep-QNetworks/src_code')
@@ -12,13 +14,9 @@ from deep_qnetworks_vectorized import DQN , SnakeEnv
 from tqdm import tqdm
 import gymnasium as gym
 from gymnasium import spaces
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 batch_size = 32  # Size of batch taken from replay buffer
-
-##################################
-# Initialize environment
-##################################
+# initialize the environment 
 Lx = 20
 Ly = 20
 
@@ -26,7 +24,7 @@ Ly = 20
 envs =  gym.vector.AsyncVectorEnv([
     lambda: SnakeEnv(size =(Lx,Ly))
     for _ in range(NUM_ENVS)
-], context='forkserver')
+], context = "fork")
 
 
 # The first model makes the predictions for Q-values which are used to make a action.
@@ -48,11 +46,6 @@ loss_function = nn.HuberLoss()
 num_actions = envs.single_action_space.n
 action_space = np.arange(num_actions)
 envs.reset()
-
-##################################
-# Utility functions
-##################################
-
 def get_image(state,body):
     """
     Represent the game as an image, state input is a tuple of 4 elements
@@ -94,9 +87,6 @@ def select_epsilon_greedy_action(model, epsilon, states, bodies):
             qs = model(input).cpu().data.numpy()
             ret.append(np.argmax(qs))
     return ret
-##################################
-# Training
-##################################
 def train_step(states, actions, rewards, next_states, dones, bodies, new_bodies, discount):
     """
     Perform a training iteration on a batch of data sampled from the experience
@@ -138,14 +128,13 @@ def train_step(states, actions, rewards, next_states, dones, bodies, new_bodies,
     loss.backward()
     optimizer.step()
     return loss
-
 # initialize the buffer, with a size of 100000, when it is full, it will remove the oldest element
 buffer = ReplayBuffer(size = 100000, device=device) 
 
 cur_frame = 0
 last_100_ep_rewards = []
 max_steps_per_episode = 100
-max_num_episodes = 10000
+max_num_episodes = 5000
 
 epsilon = 1.0
 epsilon_min = 0.1  # Minimum epsilon greedy parameter
@@ -170,7 +159,8 @@ for episode in tqdm(range(max_num_episodes)):
     episode_reward = np.zeros(NUM_ENVS)
 
     timestep = 0
-
+    
+    
     while timestep < max_steps_per_episode:
     
         cur_frame += 1
@@ -207,22 +197,23 @@ for episode in tqdm(range(max_num_episodes)):
         if timestep > epsilon_random_frames:
             epsilon -= (epsilon_max - epsilon_min) / epsilon_greedy_frames
             epsilon = max(epsilon, epsilon_min)
-    
-
-    
+       
     if len(last_100_ep_rewards) == 100:
         last_100_ep_rewards = last_100_ep_rewards[1:]
     last_100_ep_rewards.append(episode_reward)
 
     running_reward = np.mean(last_100_ep_rewards)
-
-    if episode+1 % 100 == 0:
-        """ print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
-        f' Reward in last 100 episodes: {running_reward:.2f}') """
-
+    
+    if ((episode+1) % 100) == 0:
+        #print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f} \
+        #       Reward in last 100 episodes: {running_reward:.2f}') 
+        # num step and weights
         # write on file current average reward
+        print("I'm in!")
         with open(filename, 'a') as f:
-            f.write(f'{episode},{running_reward:.2f}, {epsilon:.3f}\n')
+            f.write(f'{episode},{running_reward:.2f}, {epsilon:.3f}, {timestep: .3f}\n')
+            # save model weights
+        torch.save(model.state_dict(), 'dqn_weights.pth')
 
     # Condition to consider the task solved
     # e.g. to eat at least 6 consecutive food items
