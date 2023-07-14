@@ -12,7 +12,7 @@ import torch
 
 class game():
 
-    def __init__(self, policy=None, model_path=None, type=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
+    def __init__(self, policy=None, model_path=None, nn_type=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
 
         self.delay = delay
         self.score = 0
@@ -41,15 +41,16 @@ class game():
         self.policy = policy
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        self.type = None
         # if a model is specified, we use it to play the game
-        if model_path != None and type == 'cnn':
+        if model_path != None and nn_type == 'cnn':
             self.Lx = self.Ly = int(self.game_width/10)
             model = DQN(in_channels =1, num_actions=4, input_size=self.Lx)
             model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             model.eval()
             model.to(self.device)
             self.model = model
-            self.type = 'cnn'
+            self.type = nn_type
         elif model_path != None:
             model = QLearnNN(4,4).to(self.device) #   QNetwork(4, 4, 42)
             model.load_state_dict(torch.load(model_path))

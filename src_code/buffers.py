@@ -20,14 +20,14 @@ class ReplayBuffer(object):
         self.buffer = deque(maxlen=size)
         self.device = device
 
-    def add(self, state, action, reward, next_state, done, *args):
-        self.buffer.append((state, action, reward, next_state, done, *args))
+    def add(self, state, body, action, reward, next_state,next_body,  done):
+        self.buffer.append((state, body, action, reward, next_state, next_body, done))
 
     def __len__(self):
         return len(self.buffer)
 
     def sample(self, num_samples):
-        states, actions, rewards, next_states, dones, *args = [], [], [], [], [], [], []
+        states, bodies, actions, rewards, next_states, next_bodies, dones = [], [], [], [], [], [], []
         idx = np.random.choice(len(self.buffer), num_samples)
        
         idx[0] = np.random.randint(0, len(self.buffer)-(num_samples+1))
@@ -35,22 +35,19 @@ class ReplayBuffer(object):
 
         for i in idx:
             elem = self.buffer[i]
-            state, action, reward, next_state, done, *rest = elem
+            state, body, action, reward, next_state, next_body, done = elem
             states.append(state)
+            bodies.append(body)
             actions.append(action)
             rewards.append(reward)
-            next_states.append(np.array(next_state, copy=False))
+            next_states.append(next_state)
+            next_bodies.append(next_body)
             dones.append(done)
-            args.append(rest)
 
-        states = torch.as_tensor(np.array(states, dtype=np.float32), device=self.device)
-        actions = torch.as_tensor(np.array(actions,  dtype=np.float32), device=self.device)
-        rewards = torch.as_tensor(np.array(rewards, dtype=np.float32), device=self.device)
-        next_states = torch.as_tensor(np.array(next_states, dtype=np.float32), device=self.device)
-        dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
-        args = [torch.as_tensor(np.array(arg, dtype=np.float32), device=self.device) for arg in args]
-        args = tuple(args)
-        return states, actions, rewards, next_states, dones, args[0], args[1]
+        actions = np.array(actions)
+        rewards = np.array(rewards)
+        dones = np.array(dones)
+        return states, bodies, actions, rewards, next_states, next_bodies, dones
 
 
 class SeqReplayBuffer(ReplayBuffer):

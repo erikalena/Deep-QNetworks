@@ -50,11 +50,11 @@ if __name__ == "__main__":
         game.play()
 
     elif mode == 2:
-        game = game(step=3, delay=0.2, model_path='qlearnNN.pt') #model_path='qlearn_snake_model.pt')
+        game = game(step=3, delay=0.2, model_path='../checkpoint/qlearnNN.pt') 
         wn = game.create_environment()
         game.play()
 
     elif mode == 3:
-        game = game(step=3, delay=0.2, model_path='../checkpoint/17248/model_2000.pth', type='cnn')
+        game = game(step=3, delay=0.2, model_path='../checkpoint/17248/model_2000.pth', nn_type='cnn')
         wn = game.create_environment()
         game.play()
