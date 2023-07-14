@@ -83,8 +83,8 @@ def compute_targets_and_loss(
         images = [env.get_image(next_state) for next_state in next_states]
     else:
         images = [
-            get_image(next_state, new_body, CONFIG)
-            for next_state, new_body in zip(next_states, new_bodies)  # type: ignore
+            get_image(next_state, CONFIG)
+            for next_state in next_states # type: ignore
         ]
 
     input = (
@@ -95,6 +95,10 @@ def compute_targets_and_loss(
 
     max_next_qs = model_target(input).max(-1).values
 
+    # transform into tensors and move to device
+    rewards = torch.as_tensor(rewards, dtype=torch.float32).to(device)
+    dones = torch.as_tensor(dones, dtype=torch.float32).to(device)
+
     # if the next state is terminal, then the Q-value is just the reward
     # otherwise, we add the discounted max Q-value of the next state
     target = rewards + (1.0 - dones) * discount * max_next_qs
@@ -103,7 +107,7 @@ def compute_targets_and_loss(
     if env is not None:
         images = [env.get_image(state) for state in states]
     else:
-        images = [get_image(state, body, CONFIG) for state, body in zip(states, bodies)]  # type: ignore
+        images = [get_image(state, CONFIG) for state in states]  # type: ignore
 
     input = (
         torch.as_tensor(np.array(images), dtype=torch.float32)
@@ -214,7 +218,8 @@ def sequential_learning(env, buffer, filename):
         goal_x = np.random.randint(0, env.Lx)
         goal_y = np.random.randint(0, env.Ly)
 
-        state = [start_x, start_y, goal_x, goal_y]
+        body = []
+        state = [start_x, start_y, goal_x, goal_y, []]
 
         # done = False
         timestep = 0
@@ -222,8 +227,8 @@ def sequential_learning(env, buffer, filename):
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
-            state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
-            action = env.select_epsilon_greedy_action(model, state_in, epsilon)
+            #state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
+            action = env.select_epsilon_greedy_action(model, state, epsilon)
 
             next_state, reward, done = env.single_step(state, action)
             episode_reward += reward
