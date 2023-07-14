@@ -10,7 +10,7 @@ from collections import deque
 
 
 
-class ReplayBuffer(object):
+class SeqReplayBuffer(object):
     """
     Replay buffer to store past experiences that the 
     agent can then use for training the neural network.
@@ -20,14 +20,14 @@ class ReplayBuffer(object):
         self.buffer = deque(maxlen=size)
         self.device = device
 
-    def add(self, state, action, reward, next_state, done, *args):
-        self.buffer.append((state, action, reward, next_state, done, *args))
+    def add(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
 
     def __len__(self):
         return len(self.buffer)
 
     def sample(self, num_samples):
-        states, actions, rewards, next_states, dones, *args = [], [], [], [], [], [], []
+        states, actions, rewards, next_states, dones= [], [], [], [], []
         idx = np.random.choice(len(self.buffer), num_samples)
        
         idx[0] = np.random.randint(0, len(self.buffer)-(num_samples+1))
@@ -35,31 +35,31 @@ class ReplayBuffer(object):
 
         for i in idx:
             elem = self.buffer[i]
-            state, action, reward, next_state, done, *rest = elem
+            state, action, reward, next_state, done = elem
             states.append(state)
             actions.append(action)
             rewards.append(reward)
             next_states.append(np.array(next_state, copy=False))
             dones.append(done)
-            args.append(rest)
+            # args.append(rest)
 
         states = torch.as_tensor(np.array(states, dtype=np.float32), device=self.device)
         actions = torch.as_tensor(np.array(actions,  dtype=np.float32), device=self.device)
         rewards = torch.as_tensor(np.array(rewards, dtype=np.float32), device=self.device)
         next_states = torch.as_tensor(np.array(next_states, dtype=np.float32), device=self.device)
         dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
-        args = [torch.as_tensor(np.array(arg, dtype=np.float32), device=self.device) for arg in args]
-        args = tuple(args)
-        return states, actions, rewards, next_states, dones, args[0], args[1]
+        # args = [torch.as_tensor(np.array(arg, dtype=np.float32), device=self.device) for arg in args]
+        # args = tuple(args)
+        return states, actions, rewards, next_states, dones #, args[0], args[1]
 
 
-class SeqReplayBuffer(ReplayBuffer):
-        def add(self, state, action, reward, next_state, done):
-            super().add(state, action, reward, next_state, done)
+# class SeqReplayBuffer(ReplayBuffer):
+#         def add(self, state, action, reward, next_state, done):
+#             super().add(state, action, reward, next_state, done)
 
-        def sample(self, num_samples):
-            states, actions, rewards, next_states, dones, *args = super().sample(num_samples)
-            return states, actions, rewards, next_states, dones
+#         def sample(self, num_samples):
+#             states, actions, rewards, next_states, dones, *args = super().sample(num_samples)
+#             return states, actions, rewards, next_states, dones
         
         
 

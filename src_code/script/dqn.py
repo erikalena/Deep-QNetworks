@@ -36,7 +36,7 @@ class Config:
     batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
     env_size_y: int = 20
-    num_envs: int = 5
+    num_envs: int = 1
     max_steps_per_episode: int = 10000
     max_num_episodes: int = 1000
     epsilon: float = 1.0
@@ -79,13 +79,14 @@ def compute_targets_and_loss(
     # compute targets for Q-learning
     # the max Q-value of the next state is the target for the current state
     # the image to be fed to the network is a grey scale image of the world
-    if env is not None:
+    if env is not None:   # sequential (SnakeEnv, SeqBuffer)
         images = [env.get_image(next_state) for next_state in next_states]
-    else:
+    else:  #using gym (GymSnakeEnv, VecBuffer)
         images = [
-            get_image(next_state, CONFIG)
-            for next_state in next_states # type: ignore
+            get_image(next_state, new_body, CONFIG)
+            for next_state, new_body in zip(next_states, new_bodies)  # type: ignore
         ]
+
 
     input = (
         torch.as_tensor(np.array(images), dtype=torch.float32)
@@ -104,10 +105,10 @@ def compute_targets_and_loss(
     target = rewards + (1.0 - dones) * discount * max_next_qs
 
     # then to compute the loss, we also need the Q-value of the current state
-    if env is not None:
+    if env is not None: # sequential (SnakeEnv, SeqBuffer)
         images = [env.get_image(state) for state in states]
-    else:
-        images = [get_image(state, CONFIG) for state in states]  # type: ignore
+    else: #using gym (GymSnakeEnv, VecBuffer)
+        images = [get_image(state, body, CONFIG) for state, body in zip(states, bodies)]  # type: ignore
 
     input = (
         torch.as_tensor(np.array(images), dtype=torch.float32)
