@@ -97,8 +97,8 @@ def compute_targets_and_loss(
     max_next_qs = model_target(input).max(-1).values
 
     # transform into tensors and move to device
-    rewards = torch.as_tensor(rewards, dtype=torch.float32).to(device)
-    dones = torch.as_tensor(dones, dtype=torch.float32).to(device)
+    rewards = torch.as_tensor(rewards, dtype=torch.float32).to(CONFIG.device)
+    dones = torch.as_tensor(dones, dtype=torch.float32).to(CONFIG.device)
 
     # if the next state is terminal, then the Q-value is just the reward
     # otherwise, we add the discounted max Q-value of the next state
