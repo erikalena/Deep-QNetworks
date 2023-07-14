@@ -211,6 +211,7 @@ class SnakeAgent:
         env: gym.Env,
         discount_factor: float = 0.95,
         size: tuple[int, int] = (20, 20),
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
     ):
         """Initialize a Reinforcement Learning agent with an empty dictionary
         of state-action values (q_values), a learning rate and an epsilon.
@@ -222,6 +223,7 @@ class SnakeAgent:
             final_epsilon: The final epsilon value
             discount_factor: The discount factor for computing the Q-value
         """
+        self.device = device
         self.model = DQN(in_channels =1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
         self.model_target = DQN(in_channels = 1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
 
