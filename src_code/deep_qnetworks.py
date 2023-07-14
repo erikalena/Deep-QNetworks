@@ -68,6 +68,7 @@ class SnakeEnv():
         self.num_actions = len(self.actions)
         self.body = []
         self.points = 1
+        self.n_steps_per_point = -1
         
     def reset(self):
         """

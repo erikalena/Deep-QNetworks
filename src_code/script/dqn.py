@@ -72,15 +72,15 @@ def compute_targets_and_loss(
     next_states,
     dones,
     discount,
+    bodies,
+    new_bodies,
     env=None,
-    bodies=None,
-    new_bodies=None,
 ):
     # compute targets for Q-learning
     # the max Q-value of the next state is the target for the current state
     # the image to be fed to the network is a grey scale image of the world
     if env is not None:   # sequential (SnakeEnv, SeqBuffer)
-        images = [env.get_image(next_state) for next_state in next_states]
+        images = [env.get_image(next_state, new_body) for next_state, new_body in zip(next_states, new_bodies)]
     else:  #using gym (GymSnakeEnv, VecBuffer)
         images = [
             get_image(next_state, new_body, CONFIG)
@@ -106,7 +106,7 @@ def compute_targets_and_loss(
 
     # then to compute the loss, we also need the Q-value of the current state
     if env is not None: # sequential (SnakeEnv, SeqBuffer)
-        images = [env.get_image(state) for state in states]
+        images = [env.get_image(state, body) for state,body in zip(states, bodies)]
     else: #using gym (GymSnakeEnv, VecBuffer)
         images = [get_image(state, body, CONFIG) for state, body in zip(states, bodies)]  # type: ignore
 
@@ -117,7 +117,7 @@ def compute_targets_and_loss(
     )
 
     qs = model(input)
-
+    actions = torch.as_tensor(actions, dtype=torch.float32).to(CONFIG.device)
     # for each state, we update ONLY the Q-value of the action that was taken
     action_masks = F.one_hot(actions.long(), num_actions)
     masked_qs = (action_masks * qs).sum(dim=-1)
@@ -169,7 +169,7 @@ def vec_train_step(
     return loss
 
 
-def seq_train_step(env, states, actions, rewards, next_states, dones, discount=0.99):
+def seq_train_step(env, states, bodies, actions, rewards, next_states, next_bodies, dones, discount=0.99):
     """
     Perform a training iteration on a batch of data sampled from the experience
     replay buffer.
@@ -193,6 +193,8 @@ def seq_train_step(env, states, actions, rewards, next_states, dones, discount=0
         next_states,
         dones,
         discount,
+        bodies,
+        next_bodies,
         env=env,
     )
 
@@ -220,7 +222,7 @@ def sequential_learning(env, buffer, filename):
         goal_y = np.random.randint(0, env.Ly)
 
         body = []
-        state = [start_x, start_y, goal_x, goal_y, []]
+        state = [start_x, start_y, goal_x, goal_y]
 
         # done = False
         timestep = 0
@@ -229,13 +231,13 @@ def sequential_learning(env, buffer, filename):
             cur_frame += 1
 
             #state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
-            action = env.select_epsilon_greedy_action(model, state, epsilon)
+            action = env.select_epsilon_greedy_action(model, state, body, epsilon)
 
-            next_state, reward, done = env.single_step(state, action)
+            next_state, next_body, reward, done = env.single_step(state, body, action)
             episode_reward += reward
 
             # Save actions and states in replay buffer
-            buffer.add(state, action, reward, next_state, done)  # type: ignore
+            buffer.add(state, body, action, reward, next_state, next_body, done)  # type: ignore
             state = next_state
             cur_frame += 1
 
@@ -244,11 +246,11 @@ def sequential_learning(env, buffer, filename):
                 len(buffer) > CONFIG.batch_size
                 and cur_frame % CONFIG.update_after_actions == 0
             ):
-                states, actions, rewards, next_states, dones = buffer.sample(  # type: ignore
+                states, bodies, actions, rewards, next_states, next_bodies, dones = buffer.sample(  # type: ignore
                     CONFIG.batch_size
                 )
                 loss = seq_train_step(
-                    env, states, actions, rewards, next_states, dones, discount=0.99
+                    env, states, bodies, actions, rewards, next_states, next_bodies, dones, discount=0.99
                 )
                 accumulated_loss += loss.item()
             # Update target network every update_target_network steps.

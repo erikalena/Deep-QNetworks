@@ -10,7 +10,7 @@ from collections import deque
 
 
 
-class ReplayBuffer(object):
+class SeqReplayBuffer(object):
     """
     Replay buffer to store past experiences that the 
     agent can then use for training the neural network.
@@ -51,60 +51,7 @@ class ReplayBuffer(object):
             
 
 
-        
-class SeqReplayBuffer(object):
-    """
-    Replay buffer to store past experiences that the 
-    agent can then use for training the neural network.
-    """
 
-    def __init__(self, size, device:str = 'cpu'):
-        self.buffer = deque(maxlen=size)
-        self.device = device
-
-    def add(self, state, action, reward, next_state, done):
-        self.buffer.append((state, action, reward, next_state, done))
-
-    def __len__(self):
-        return len(self.buffer)
-
-    def sample(self, num_samples):
-        states, actions, rewards, next_states, dones= [], [], [], [], []
-        idx = np.random.choice(len(self.buffer), num_samples)
-       
-        idx[0] = np.random.randint(0, len(self.buffer)-(num_samples+1))
-        idx[1:] = np.arange(idx[0]+1, idx[0]+num_samples)
-
-        for i in idx:
-            elem = self.buffer[i]
-            state, action, reward, next_state, done = elem
-            states.append(state)
-            bodies.append(body)
-            actions.append(action)
-            rewards.append(reward)
-            next_states.append(next_state)
-            next_bodies.append(next_body)
-            dones.append(done)
-            # args.append(rest)
-
-        states = torch.as_tensor(np.array(states, dtype=np.float32), device=self.device)
-        actions = torch.as_tensor(np.array(actions,  dtype=np.float32), device=self.device)
-        rewards = torch.as_tensor(np.array(rewards, dtype=np.float32), device=self.device)
-        next_states = torch.as_tensor(np.array(next_states, dtype=np.float32), device=self.device)
-        dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
-        # args = [torch.as_tensor(np.array(arg, dtype=np.float32), device=self.device) for arg in args]
-        # args = tuple(args)
-        return states, actions, rewards, next_states, dones #, args[0], args[1]
-
-
-# class SeqReplayBuffer(ReplayBuffer):
-#         def add(self, state, action, reward, next_state, done):
-#             super().add(state, action, reward, next_state, done)
-
-#         def sample(self, num_samples):
-#             states, actions, rewards, next_states, dones, *args = super().sample(num_samples)
-#             return states, actions, rewards, next_states, dones
-        
         
 
 class VecReplayBuffer(object): #TODO make it as a subclass of ReplayBuffer
