@@ -49,28 +49,27 @@ class DQN(nn.Module):
 ##################################
 # Environment
 ##################################
+class SnakeEnv():
 
-
-class SnakeEnv:
-    def __init__(self, Lx, Ly, start=None, end=None):
+    def __init__(self, Lx, Ly, start = None, end = None):
+        
         # World shape
         self.Ly, self.Lx = Lx, Ly
-
+ 
         # start and end positions
-        self.start = [0, 0] if start is None else start
+        self.start = [0,0] if start is None else start
         self.end = None if end is None else end
         self.current_state = self.start
-
+        
         self.done = False
 
-        # space of actions  [Down,  Up,  Right,Left]
-        self.actions = np.array([[1, 0], [-1, 0], [0, 1], [0, -1]])
+        # space of actions  [Down,  Up,  Right,Left] 
+        self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
         self.num_actions = len(self.actions)
         self.body = []
-        self.points = 0
-        self.n_steps_per_point = []
-        self.number_of_steps = 0
-
+        self.points = 1
+        self.n_steps_per_point = -1
+        
     def reset(self):
         """
         Restart snake by setting current state to start
@@ -79,131 +78,103 @@ class SnakeEnv:
         self.body = []
         self.done = False
         self.points = 1
-        self.n_steps_per_point = []
-        self.number_of_steps = 0
-
-    def single_step(self, state, action):
+        
+    def single_step(self, state, body, action):
         """
         Evolves the environment given action A and current state.
         """
-        self.number_of_steps += 1
-        a = self.actions[action]  # action is an integer in [0,1,2,3]
+        a = self.actions[action] # action is an integer in [0,1,2,3]
         S_new = copy.deepcopy(state)
         head = S_new[:2]
-        goal = S_new[2:4]
+        goal = S_new[2:]
         head += a
 
         # add a penalty for moving
         reward = -1
-
-        body = S_new[4]
+        
         # if the snake eats itself, add penalty 
         if list(head) in body:
             self.done = True
             reward = -1000
-            self.n_steps_per_point.append(self.number_of_steps)
 
         # update all the body segments in reverse order
-        for i in range(len(body) - 1, 0, -1):
-            body[i] = list(body[i - 1])
-
+        for i in range(len(body)-1,0,-1):
+            body[i] = list(body[i-1])
+        
         # update the first segment
         if len(body) > 0:
             body[0] = list(self.current_state)
 
         # If we go out of the world, we enter from the other side
-        if S_new[0] == self.Ly:
+        if (S_new[0] == self.Ly):
             S_new[0] = 0
-        elif S_new[0] == -1:
+        elif (S_new[0] == -1):
             S_new[0] = self.Ly - 1
-        elif S_new[1] == self.Lx:
+        elif (S_new[1] == self.Lx):
             S_new[1] = 0
-        elif S_new[1] == -1:
+        elif (S_new[1] == -1):
             S_new[1] = self.Lx - 1
-
         elif np.all(head == goal):
-            # self.done = True
+            # self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
             # add an element to the body
-            self.points += 1  # if we eat the food we have a level of 1
+            self.points += 1 # if we eat the food we have a level of 1
             new_segment = body[-1] if len(body) > 0 else list(head)
             body.append(new_segment)
-            self.n_steps_per_point.append(self.number_of_steps)
-            self.number_of_steps = 0
+        
 
         # change the current position
         self.current_state = head
         self.body = body
         S_new[:2] = head
-        S_new[4] = body
-        return S_new, reward, self.done
-
+        return S_new, body, reward, self.done
+    
     def get_points(self):
         return self.points
 
-    def get_image(self, state):
+
+    def get_image(self,state, body):
         """
         Represent the game as an image, state input is a tuple of 4 elements
         (x,y,x_food,y_food)
         """
-        image = np.zeros((self.Lx, self.Ly))
-        head = state[:2]
-        goal = state[2:4]
-        body = state[4]
+        image = np.zeros((self.Lx,self.Ly))
 
-        if (
-            goal[0] >= 0
-            and goal[0] < self.Lx
-            and goal[1] >= 0
-            and goal[1] < self.Ly
-        ):
+        head = state[:2]
+        goal = state[2:]
+
+        if goal[0] >= 0 and goal[0] < self.Lx and goal[1] >= 0 and goal[1] < self.Ly:
             image[int(goal[0]), int(goal[1])] = .5
 
-        if (
-            head[0] >= 0
-            and head[0] < self.Lx
-            and head[1] >= 0
-            and head[1] < self.Ly
-        ):
+        if head[0] >= 0 and head[0] < self.Lx and head[1] >= 0 and head[1] < self.Ly:
             image[int(head[0]), int(head[1])] = 1
         else:
             # if the agent is out of the world, it is dead and so we cancel the food as well
             # this check is just for safety reasons, if we allow the snake to go through the walls
             # this should never happen
-            image[int(goal[0]), int(goal[1])] = 0
-
+            image[int(goal[0]), int(goal[1])] = 0 
+        
         for i in range(len(body)):
-            if (
-                body[i][0] >= 0
-                and body[i][0] < self.Lx
-                and body[i][1] >= 0
-                and body[i][1] < self.Ly
-            ):
+            if body[i][0] >= 0 and body[i][0] < self.Lx and body[i][1] >= 0 and body[i][1] < self.Ly:
                 image[int(body[i][0]), int(body[i][1])] = .1
-
+            
         return image
 
-    def select_epsilon_greedy_action(self, model, state, epsilon):
+    def select_epsilon_greedy_action(self, model, state, body, epsilon):
         """
-        Take random action with probability epsilon,
+        Take random action with probability epsilon, 
         else take best action.
         """
         result = np.random.uniform()
         if result < epsilon:
-            return np.random.choice(np.arange(self.num_actions))
-        else:
-            # input is a tensor of floats
-            images = self.get_image(state)
-            logging.debug(f"model.device: {model.device()}")
-            input = (
-                torch.as_tensor(images, dtype=torch.float32)
-                .unsqueeze(0)
-                .unsqueeze(0)
-                .to(model.device())
-            )
+            return np.random.choice(np.arange(self.num_actions)) 
+        else:       
+            images = self.get_image(state, body) 
+            #logging.debug(f"model.device: {model.device()}")
+            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(model.device())
 
             qs = model(input).cpu().data.numpy()
-            return np.argmax(qs)
+            return np.argmax(qs) 
 
 
 class GymSnakeEnv(gym.Env):
