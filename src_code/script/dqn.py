@@ -36,9 +36,9 @@ class Config:
     batch_size: int = 32  # Size of batch taken from replay buffer
     env_size_x: int = 20
     env_size_y: int = 20
-    num_envs: int = 2
+    num_envs: int = 5
     max_steps_per_episode: int = 10000
-    max_num_episodes: int = 5000
+    max_num_episodes: int = 1000
     epsilon: float = 1.0
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
@@ -341,6 +341,9 @@ def vectorized_learning(env, buffer, filename):
             )
             episode_reward += rewards
             new_bodies = list(new_bodies["body"])
+            
+            if np.all(dones):
+                break
 
             # Save actions and states in replay buffer
             buffer.add_multiple(
@@ -400,7 +403,7 @@ def vectorized_learning(env, buffer, filename):
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
                 # "points": env.get_points(),
-                # "steps" : timestep,
+                "steps" : timestep,
                 # "steps_per_point": env.n_steps_per_point,
                 "reward_mean": np.mean(statistics.episode_rewards),
                 "loss_mean": np.mean(statistics.losses),
@@ -489,7 +492,7 @@ if __name__ == "__main__":
                 lambda: GymSnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y))
                 for _ in range(CONFIG.num_envs)
             ],
-            context="forkserver",
+            context="fork",
         )
         num_actions = env.single_action_space.n  # type: ignore
         input_size = env.single_observation_space.spaces["agent"].high[0]  # type: ignore
