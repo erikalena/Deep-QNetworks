@@ -31,7 +31,7 @@ class Config:
     env_size_y: int = 20
     num_envs: int = 1
     max_steps_per_episode: int = 1000000
-    max_num_episodes: int = 200
+    max_num_episodes: int = 10000
     deque_size: int = 100
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
@@ -54,8 +54,10 @@ class Config:
 CONFIG = Config()
 
 
-def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_filename):
+def dqn_learning(CONFIG):
     # Save configuration
+    filename: str = CONFIG.output_logdir + "/" + CONFIG.output_filename
+    print(CONFIG)
     with open(filename, "w") as f:
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
@@ -92,6 +94,7 @@ def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_file
     buffer = SeqReplayBuffer(size=CONFIG.buffer_size, device=CONFIG.device)
 
     cur_frame = 0
+    fruits_eaten_per_episode = []
     for episode in tqdm(range(CONFIG.max_num_episodes)):
         obs, info = env.reset()
         terminated = False
@@ -147,6 +150,8 @@ def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_file
 
         snake_agent.decay_epsilon()
 
+        fruits_eaten_per_episode.append(env.eaten_fruits)
+        
         if ((episode + 1) % CONFIG.save_step) == 0:
             # write on file current average reward
             metrics = {
@@ -158,11 +163,12 @@ def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_file
             file = json.load(open(filename))
             file["episode_{}".format(episode)] = {
                 "training_error": str(np.mean(snake_agent.training_error)),
+                "mean_eaten": np.mean(fruits_eaten_per_episode),
                 "eatens": env.eaten_fruits,
                 "epsilon": str(snake_agent.epsilon),
                 }
             json.dump(file, open(filename, "w"), indent=4)
-            
+            fruits_eaten_per_episode = []
             with open(
                 CONFIG.output_logdir + "/metrics_{}".format(episode), "wb"
             ) as handle:
@@ -172,7 +178,7 @@ def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_file
                 snake_agent.model.state_dict(),
                 CONFIG.output_checkpoint_dir + "/model_{}".format(episode),
             )
-            save_fig(env, snake_agent)
+            save_fig(env, snake_agent, episode)
 
         # Condition to consider the task solved
         if np.mean(env.return_queue) > 500:  # type: ignore
@@ -180,7 +186,7 @@ def dqn_learning(filename: str = CONFIG.output_logdir + "/" + CONFIG.output_file
             break
 
 
-def save_fig(env, snake_agent):
+def save_fig(env, snake_agent, episode):
     rolling_length = 500
     fig, axs = plt.subplots(ncols=3, figsize=(12, 5))
     axs[0].set_title("Episode rewards")
@@ -207,7 +213,7 @@ def save_fig(env, snake_agent):
     )
     axs[2].plot(range(len(training_error_moving_average)), training_error_moving_average)
     plt.tight_layout()
-    plt.savefig(CONFIG.output_logdir + "/training_metrics.png")
+    plt.savefig(CONFIG.output_logdir + "/training_metrics_{}.png".format(episode))
 
 
 if __name__ == "__main__":
@@ -230,6 +236,7 @@ if __name__ == "__main__":
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
     )
+
     os.makedirs(CONFIG.output_logdir, exist_ok=True)
     os.makedirs(CONFIG.output_checkpoint_dir, exist_ok=True)
-    dqn_learning()
+    dqn_learning(CONFIG)
