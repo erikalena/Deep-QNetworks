@@ -1,19 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 import numpy as np
-import copy
-from qnetworks import ReplayBuffer
-from buffers import SeqReplayBuffer
-from deep_qnetworks import DQN , SnakeEnv, SnakeAgent
-from tqdm import tqdm
-import gymnasium as gym
-from gymnasium import spaces
-import pickle
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_step(states, actions, rewards, next_states, dones, bodies, new_bodies, snake_agent, loss_function, optimizer):
+
+def train_step(states, actions, rewards, next_states, dones, bodies, new_bodies, snake_agent, loss_function, optimizer, device='cpu'):
     """
     Perform a training iteration on a batch of data sampled from the experience
     replay buffer.

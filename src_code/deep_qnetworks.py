@@ -63,8 +63,8 @@ class SnakeEnv(gym.Env):
         
         self.observation_space = spaces.Dict(
             {
-                "agent": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int),
-                "target": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int),
+                "agent": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int), # type: ignore
+                "target": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int), # type: ignore
             }
         )
         
@@ -100,6 +100,7 @@ class SnakeEnv(gym.Env):
         """
         self.window = None
         self.clock = None
+   
        
         
 
@@ -309,9 +310,9 @@ class SnakeAgent:
         epsilon_decay: float,
         final_epsilon: float,
         num_actions: int,
-        size: tuple[int, int] = (20, 20),
+        env: gym.Env,
+        size: tuple[int, int],
         discount_factor: float = 0.95,
-        env: gym.Env = SnakeEnv,
         num_envs: int = 1,
     ):
         """Initialize a Reinforcement Learning agent with an empty dictionary
