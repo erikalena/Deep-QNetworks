@@ -38,7 +38,7 @@ class Config:
     env_size_y: int = 20
     num_envs: int = 2
     max_steps_per_episode: int = 3000000
-    max_num_episodes: int = 200
+    max_num_episodes: int = 5
     epsilon: float = 1.0
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
@@ -54,6 +54,7 @@ class Config:
     save_step: int = 1  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
     description: str = "Deep Q-Network Snake, done after snake eats itself"
+    load_from_checkpoint: str = None
 
 
 CONFIG = Config()
@@ -79,14 +80,16 @@ def compute_targets_and_loss(
     # compute targets for Q-learning
     # the max Q-value of the next state is the target for the current state
     # the image to be fed to the network is a grey scale image of the world
-    if env is not None:   # sequential (SnakeEnv, SeqBuffer)
-        images = [env.get_image(next_state, new_body) for next_state, new_body in zip(next_states, new_bodies)]
-    else:  #using gym (GymSnakeEnv, VecBuffer)
+    if env is not None:  # sequential (SnakeEnv, SeqBuffer)
+        images = [
+            env.get_image(next_state, new_body)
+            for next_state, new_body in zip(next_states, new_bodies)
+        ]
+    else:  # using gym (GymSnakeEnv, VecBuffer)
         images = [
             get_image(next_state, new_body, CONFIG)
             for next_state, new_body in zip(next_states, new_bodies)  # type: ignore
         ]
-
 
     input = (
         torch.as_tensor(np.array(images), dtype=torch.float32)
@@ -105,9 +108,9 @@ def compute_targets_and_loss(
     target = rewards + (1.0 - dones) * discount * max_next_qs
 
     # then to compute the loss, we also need the Q-value of the current state
-    if env is not None: # sequential (SnakeEnv, SeqBuffer)
-        images = [env.get_image(state, body) for state,body in zip(states, bodies)]
-    else: #using gym (GymSnakeEnv, VecBuffer)
+    if env is not None:  # sequential (SnakeEnv, SeqBuffer)
+        images = [env.get_image(state, body) for state, body in zip(states, bodies)]
+    else:  # using gym (GymSnakeEnv, VecBuffer)
         images = [get_image(state, body, CONFIG) for state, body in zip(states, bodies)]  # type: ignore
 
     input = (
@@ -169,7 +172,17 @@ def vec_train_step(
     return loss
 
 
-def seq_train_step(env, states, bodies, actions, rewards, next_states, next_bodies, dones, discount=0.99):
+def seq_train_step(
+    env,
+    states,
+    bodies,
+    actions,
+    rewards,
+    next_states,
+    next_bodies,
+    dones,
+    discount=0.99,
+):
     """
     Perform a training iteration on a batch of data sampled from the experience
     replay buffer.
@@ -230,7 +243,7 @@ def sequential_learning(env, buffer, filename):
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
-            #state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
+            # state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
             action = env.select_epsilon_greedy_action(model, state, body, epsilon)
 
             next_state, next_body, reward, done = env.single_step(state, body, action)
@@ -250,7 +263,15 @@ def sequential_learning(env, buffer, filename):
                     CONFIG.batch_size
                 )
                 loss = seq_train_step(
-                    env, states, bodies, actions, rewards, next_states, next_bodies, dones, discount=0.99
+                    env,
+                    states,
+                    bodies,
+                    actions,
+                    rewards,
+                    next_states,
+                    next_bodies,
+                    dones,
+                    discount=0.99,
                 )
                 accumulated_loss += loss.item()
             # Update target network every update_target_network steps.
@@ -282,7 +303,7 @@ def sequential_learning(env, buffer, filename):
             epsilon -= 0.025
             epsilon = max(epsilon, CONFIG.epsilon_min) """
 
-        if episode % CONFIG.save_step == 0:
+        if episode % CONFIG.save_step == 1:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
             logging.info(f"\n Saving results at episode {episode}")
@@ -325,13 +346,17 @@ def vectorized_learning(env, buffer, filename):
     epsilon = CONFIG.epsilon
 
     # env.start = np.array([0,0])
-    pbar = tqdm(range(CONFIG.max_num_episodes))
+    # pbar = tqdm(range(CONFIG.max_num_episodes))
     for episode in range(CONFIG.max_num_episodes):
+        logging.info(
+            f"Episode {episode}/{CONFIG.max_num_episodes}. Epsilon: {epsilon:.3f}."
+        )
         env.reset()
         episode_reward = np.zeros(CONFIG.num_envs)
 
         timestep = 0
         accumulated_loss = 0
+        while_bar = tqdm(range(CONFIG.max_steps_per_episode), desc="Run episodes")
         while timestep < CONFIG.max_steps_per_episode:
             cur_frame += 1
 
@@ -349,7 +374,7 @@ def vectorized_learning(env, buffer, filename):
             )
             episode_reward += rewards
             new_bodies = list(new_bodies["body"])
-            
+
             if np.all(dones):
                 break
 
@@ -391,19 +416,43 @@ def vectorized_learning(env, buffer, filename):
 
             timestep += 1
 
-            if timestep > CONFIG.epsilon_random_frames:
+            # if timestep > CONFIG.epsilon_random_frames:
+            #     epsilon -= (
+            #         CONFIG.epsilon_max - CONFIG.epsilon_min
+            #     ) / CONFIG.epsilon_greedy_frames
+            #     epsilon = max(epsilon, CONFIG.epsilon_min)
+
+            if cur_frame > CONFIG.epsilon_random_frames:
                 epsilon -= (
                     CONFIG.epsilon_max - CONFIG.epsilon_min
                 ) / CONFIG.epsilon_greedy_frames
                 epsilon = max(epsilon, CONFIG.epsilon_min)
+            
+            if statistics.len == 100000:
+                statistics.shift()
+            statistics.append(
+                loss=accumulated_loss / timestep, episode_reward=episode_reward
+            )
 
-        if statistics.len == CONFIG.save_step:
-            statistics.shift()
-        statistics.append(
-            loss=accumulated_loss / timestep, episode_reward=episode_reward
-        )
+            if timestep % 100000 == 0:
+                logging.info(
+                    f"Step {timestep}/{CONFIG.max_steps_per_episode}. Epsilon: {epsilon:.3f}."
+                )
+                file = json.load(open(filename))
+                file["episode_{}_step_{}".format(episode, timestep)] = {
+                    "steps": f"{timestep}/{CONFIG.max_steps_per_episode}",
+                    "epsilon": epsilon,
+                    #"total_reward": episode_reward,
+                    "reward_mean": np.mean(statistics.episode_rewards),
+                    "loss_mean": np.mean(statistics.losses),
+                    "current_time": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+                }
+                json.dump(file, open(filename, "w"), indent=4)
 
-        if episode % 100 == 0:
+            while_bar.update(1)
+
+
+        if episode % CONFIG.save_step == 0:
             """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
             f' Reward in last 100 episodes: {running_reward:.2f}')"""
             logging.info(f"\n Saving results at episode {episode}")
@@ -411,14 +460,15 @@ def vectorized_learning(env, buffer, filename):
             file["episode_{}".format(episode)] = {
                 "epsilon": epsilon,
                 # "points": env.get_points(),
-                "steps" : timestep,
+                "steps": timestep,
                 # "steps_per_point": env.n_steps_per_point,
                 "reward_mean": np.mean(statistics.episode_rewards),
                 "loss_mean": np.mean(statistics.losses),
                 # "points_mean": running_points,
                 # "steps_mean": running_steps,
-                "elapsed_time": pbar.format_dict["elapsed"],
-                "estimated_time": pbar.format_dict["remaining"],
+                #  "elapsed_time": pbar.format_dict["elapsed"],
+                # "estimated_time": pbar.format_dict["remaining"],
+                "current_time": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             }
             json.dump(file, open(filename, "w"), indent=4)
             # Save model
@@ -433,7 +483,7 @@ def vectorized_learning(env, buffer, filename):
         if np.mean(statistics.episode_rewards) > 500:
             print("Solved at episode {}!".format(episode))
             break
-        pbar.update(1)
+        # pbar.update(1)
 
 
 def dqn_learning(env):
@@ -482,6 +532,8 @@ if __name__ == "__main__":
         description="Vectorized DQN:" + args.desc
         if args.num_envs > 1
         else "Sequential DQN:" + args.desc,
+        load_from_checkpoint=args.load_checkpoint,
+        save_step=CONFIG.save_step,
     )
 
     logging.basicConfig(level=CONFIG.logging_level)
@@ -508,6 +560,14 @@ if __name__ == "__main__":
 
     model = DQN(in_channels=1, num_actions=num_actions, input_size=input_size)
     model_target = DQN(in_channels=1, num_actions=num_actions, input_size=input_size)
+
+    if CONFIG.load_from_checkpoint is not None:
+        file_path = os.path.join(
+            CONFIG.output_checkpoint_dir, CONFIG.load_from_checkpoint
+        )
+        model.load_state_dict(torch.load(file_path))
+        model_target.load_state_dict(torch.load(file_path))
+        logging.info(f"Loaded model from {file_path}")
 
     logging.debug(f"main, dqn_script: CONFIG.device: {CONFIG.device}")
 

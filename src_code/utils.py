@@ -1,5 +1,3 @@
-
-
 def add_parser_argument(parser, config):
     parser.add_argument(
         "--Lx", type=int, default=config.env_size_x, help="Size x of the environment"
@@ -81,6 +79,12 @@ def add_parser_argument(parser, config):
     )
     parser.add_argument(
         "--num_envs", type=int, default=config.num_envs, help="Number of environments"
+    )
+    parser.add_argument(
+        "--load_checkpoint",
+        type=str,
+        default=config.load_from_checkpoint,
+        help="Load checkpoint",
     )
     return parser
 
