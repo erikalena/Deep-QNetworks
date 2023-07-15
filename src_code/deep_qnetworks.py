@@ -8,7 +8,7 @@ import copy
 import logging
 import gymnasium as gym
 from gymnasium import spaces
-
+import pygame
 
 
 
@@ -18,7 +18,7 @@ from gymnasium import spaces
 class DQN(nn.Module):
     def __init__(self, in_channels=1, num_actions=4, input_size=84):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=8, stride=4)
+        self.conv1 = nn.Conv2d(in_channels, 32, kernel_size=4, stride=2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.input_size = self.compute_conv_output_size(input_size)
         self.fc = nn.Linear(64*self.input_size*self.input_size, 256)
@@ -53,16 +53,14 @@ class DQN(nn.Module):
 
 class SnakeEnv(gym.Env):
 
-    metadata = {"render_modes": ["wb_array"], "render_fps": 4}
+    metadata = {"render_modes": ["human","wb_array"], "render_fps": 30}
     
     def __init__(self, size, render_mode = "wb_array"):
         
         # World shape
         self.Ly, self.Lx = size
-        #self.observation_space = spaces.Box(low=0, high=3, shape=[Lx, Ly])
-        # start and end positions
+        self.window_size = 512  # The size of the PyGame window
         
-
         self.observation_space = spaces.Dict(
             {
                 "agent": spaces.Box(np.array([0, 0]), np.array([self.Lx, self.Ly]), shape=(2,), dtype=int),
@@ -92,20 +90,31 @@ class SnakeEnv(gym.Env):
         self.num_actions = 4
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
+        self.eaten_fruits = 0
+        """
+        If human-rendering is used, `self.window` will be a reference
+        to the window that we draw to. `self.clock` will be a clock that is used
+        to ensure that the environment is rendered at the correct framerate in
+        human-mode. They will remain `None` until human-mode is used for the
+        first time.
+        """
+        self.window = None
+        self.clock = None
+       
         
 
     def _get_obs(self):
         return {"agent": self._agent_location, "target": self._target_location}
     
     def _get_info(self):
-        return {"body": self.body}
+        return {"body": self.body, "eaten_fruits": self.eaten_fruits, "done": self.done}
         
     def reset(self,seed=None, options=None):
         """
         Restart snake by setting current state to start
         """
         super().reset(seed=seed)
-        self._agent_location = [0,0]
+        self._agent_location = np.asarray([0,0])
         # We will sample the target's location randomly until it does not coincide with the agent's location
         self._target_location = self._agent_location
         while np.array_equal(self._target_location, self._agent_location):
@@ -114,38 +123,34 @@ class SnakeEnv(gym.Env):
         )
 
         self.body = []
+        self.eaten_fruits = 0
         self.done = False
         observation = self._get_obs()
         info = self._get_info() 
         return observation, info
-        
+    
+    def check_collision(self):
+        finding_list = [np.array_equal(self._agent_location,x) for x in self.body]
+        if True in finding_list:
+            return True, finding_list.index(True)
+        else:
+            return False, -1
+
     def step(self, action):
         """
         Evolves the environment given action A and current state.
         """
 
         a = self._action_to_direction[action] # action is an integer in [0,1,2,3]
-
-
+        self._prev_agent_location = copy.deepcopy(self._agent_location)
+        
+        # move the agent
         self._agent_location += a
 
         # add a penalty for moving
         reward = -1
 
-        # if the snake eats itself, add penalty 
-        if self._agent_location in self.body:
-            self.done = True
-            reward = -1000
-
-        # update all the body segments in reverse order
-        for i in range(len(self.body)-1,0,-1):
-            self.body[i] = self.body[i-1]
-        
-        # update the first segment
-        if len(self.body) > 0:
-            self.body[0] = self._agent_location
-
-        # If we go out of the world, we enter from the other side
+        # Out of bounds case
         if (self._agent_location[0] == self.Ly):
             self._agent_location[0] = 0
         elif (self._agent_location[0] == -1):
@@ -154,50 +159,144 @@ class SnakeEnv(gym.Env):
             self._agent_location[1] = 0
         elif (self._agent_location[1] == -1):
             self._agent_location[1] = self.Lx - 1
-
         
-        elif np.all(self._agent_location == self._target_location): ## this might not work
-            self.done = True       
+        # Target reached case
+        if np.all(self._agent_location == self._target_location): ## this might not work
+            #self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
-            print("Reached the target")
+            self.eaten_fruits += 1
             # add an element to the body
-            new_segment = self.body[-1] if len(self.body) > 0 else self._agent_location
-            self.body.append(new_segment)
+            self.body.append(self._prev_agent_location)
+            #update the target location
+            while np.array_equal(self._target_location, self._agent_location):
+                self._target_location = self.np_random.integers(
+                np.array([0, 0]), np.array([self.Lx, self.Ly]), size=(2,), dtype=int)
+        # Collision case
+        elif (tmp:=self.check_collision())[0]: # I used warlus operator to avoid building tmp twice
+            self.done = True
+            self.body.append(self._prev_agent_location)
+            self.body = self.body[tmp[1]+1:]
+            reward = -1000
+        else:
+            self.body.append(self._prev_agent_location)
+            # remove the last element of the body
+            self.body = self.body[1:]
+
         
         # change the current position
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, self.done, info, False # I don't knwo what the last False is for, just overriding
+        return observation, reward, self.done, False, info # I don't knwo what the last False is for, just overriding
     
 
+
     def render(self):
-        if self.render_mode == "wb_array":
+        if self.render_mode == "human":
             return self._render_frame()
     
     def _render_frame(self):
-        """
-        Represent the game as an image, state input is a tuple of 4 elements
-        (x,y,x_food,y_food)
-        """
-        image = np.zeros((self.Lx,self.Ly))
-        if self._target_location[0] >= 0 and self._target_location[0] < self.Lx and self._target_location[1] >= 0 and self._target_location[1] < self.Ly:
-            image[int(self._target_location[0]), int(self._target_location[1])] = 1
+        if self.window is None and self.render_mode == "human":
+            print("Initializing pygame")
+            pygame.init()
+            pygame.display.init()
+            self.window = pygame.display.set_mode(
+                (self.window_size, self.window_size)
+            )
 
-        if self._agent_location[0] >= 0 and self._agent_location[0] < self.Lx and self._agent_location[1] >= 0 and self._agent_location[1] < self.Ly:
-            image[int(self._agent_location[0]), int(self._agent_location[1])] = 1
-        else:
-            # if the agent is out of the world, it is dead and so we cancel the food as well
-            # this check is just for safety reasons, if we allow the snake to go through the walls
-            # this should never happen
-            image[int(self._target_location[0]), int(self._target_location[1])] = 0 
+        
+        if self.clock is None and self.render_mode == "human":
+            self.clock = pygame.time.Clock()
+
+        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas.fill((0, 0, 0))
+        pix_square_size = (
+            self.window_size / self.Lx
+        )  # The size of a single grid square in pixels
+
+        # First we draw the target
+        pygame.draw.rect(
+            canvas,
+            (255, 0, 0),
+            pygame.Rect(
+                pix_square_size * self._target_location,
+                (pix_square_size, pix_square_size),
+            ),
+        )
+        # Now we draw the agent
+        pygame.draw.circle(
+            canvas,
+            (0, 102, 0),
+            (self._agent_location + 0.5) * pix_square_size,
+            pix_square_size / 3,
+        )
+        # Now we draw the body
+        for body_part in self.body:
+            pygame.draw.circle(
+                canvas,
+                (0, 51, 0),
+                (body_part + 0.5) * pix_square_size,
+                pix_square_size / 3,
+            )
+        # Finally, add some gridlines
+        for x in range(self.Lx + 1):
+            pygame.draw.line(
+                canvas,
+                0,
+                (0, pix_square_size * x),
+                (self.window_size, pix_square_size * x),
+                width=3,
+            )
+            pygame.draw.line(
+                canvas,
+                0,
+                (pix_square_size * x, 0),
+                (pix_square_size * x, self.window_size),
+                width=3,
+            )
+
+        if self.render_mode == "human":
+            # The following line copies our drawings from `canvas` to the visible window
+            self.window.blit(canvas, canvas.get_rect())
+            pygame.event.pump()
+            pygame.display.update()
+
+            # We need to ensure that human-rendering occurs at the predefined framerate.
+            # The following line will automatically add a delay to keep the framerate stable.
+            self.clock.tick(self.metadata["render_fps"])
+
+        else:  # rgb_array
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+            )
+    def play(self):
+        self._render_frame()
+        game_over=False
+        while not game_over:
             
-        for i in range(len(self.body)):
-            if self.body[i][0] >= 0 and self.body[i][0] < self.Lx and self.body[i][1] >= 0 and self.body[i][1] < self.Ly:
-                image[int(self.body[i][0]), int(self.body[i][1])] = 1
-            
-        return image
-    
+            for event in pygame.event.get():
+                
+                if event.type==pygame.QUIT:
+                    game_over=True
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self.step(3)
+                    elif event.key == pygame.K_DOWN:
+                        self.step(2)
+                    elif event.key == pygame.K_LEFT:
+                        self.step(1)
+                    elif event.key == pygame.K_RIGHT:
+                        self.step(0)
+                self._render_frame()
+        
+        self.close()
+
+    def close(self):
+        if self.window is not None:
+            pygame.display.quit()
+            pygame.quit()
+            self.window = None
+
 
 #####################
 # Agent
@@ -209,10 +308,11 @@ class SnakeAgent:
         initial_epsilon: float,
         epsilon_decay: float,
         final_epsilon: float,
-        env: gym.Env,
-        discount_factor: float = 0.95,
+        num_actions: int,
         size: tuple[int, int] = (20, 20),
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        discount_factor: float = 0.95,
+        env: gym.Env = SnakeEnv,
+        num_envs: int = 1,
     ):
         """Initialize a Reinforcement Learning agent with an empty dictionary
         of state-action values (q_values), a learning rate and an epsilon.
@@ -224,9 +324,15 @@ class SnakeAgent:
             final_epsilon: The final epsilon value
             discount_factor: The discount factor for computing the Q-value
         """
-        self.device = device
-        self.model = DQN(in_channels =1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
-        self.model_target = DQN(in_channels = 1, num_actions=env.action_space.n, input_size=env.Lx).to(device)
+        self.num_actions = num_actions
+        self.size = size
+
+        self.env = env
+        self.num_envs = num_envs
+        
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = DQN(in_channels =1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
+        self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
 
         self.lr = learning_rate
@@ -241,6 +347,8 @@ class SnakeAgent:
         self.size = size
         
         self.env = env
+        self.training_error = []
+
 
     def get_image(self, state, body):
         """
@@ -266,12 +374,14 @@ class SnakeAgent:
             
         
 
-    def get_action(self, state, body) -> int:
+    def get_action(self, state, info) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
         """
         # with probability epsilon return a random action to explore the environment
+        state = list(np.concatenate([state["agent"],state["target"]]))
+        body = info["body"]
         if np.random.random() < self.epsilon:
             return self.env.action_space.sample()
 
@@ -279,7 +389,7 @@ class SnakeAgent:
         else:
             # input is a tensor of floats
             images = self.get_image(state, body) 
-            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.model.device)
+            input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.device)
             qs = self.model(input).cpu().data.numpy()
             return np.argmax(qs)
     
@@ -293,11 +403,11 @@ class SnakeAgent:
         for state, body in zip(states, bodies):
             result = np.random.uniform()
             if result < self.epsilon:
-                ret.append(self.env.action_space.sample()) 
+                ret.append(self.env.single_action_space.sample()) 
             else:
                 # input is a tensor of floats
                 images = self.get_image(state, body) 
-                input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(model.device)
+                input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.device)
                 qs = self.model(input).cpu().data.numpy()
                 ret.append(np.argmax(qs))
         return ret

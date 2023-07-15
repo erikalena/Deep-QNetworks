@@ -71,7 +71,12 @@ class SeqReplayBuffer(object):
         self.buffer = deque(maxlen=size)
         self.device = device
 
-    def add(self, state, action, reward, next_state, done, body, new_body):
+    def add(self, state, action, reward, next_state, done, info, new_info):
+        state = list(np.concatenate([state["agent"],state["target"]]))
+        next_state = list(np.concatenate([next_state["agent"],next_state["target"]]))
+        body = info["body"]
+        new_body = new_info["body"]
+
         self.buffer.append((state, action, reward, next_state, done, body, new_body))
     
     def add_multiple(self, states, actions, rewards, next_states, dones, bodies, new_bodies):
