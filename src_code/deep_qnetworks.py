@@ -54,7 +54,7 @@ NEGATVIE_REWARD = -100
 
 class SnakeEnv(gym.Env):
 
-    metadata = {"render_modes": ["human","wb_array"], "render_fps": 30}
+    metadata = {"render_modes": ["human"], "render_fps": 30}
     
     def __init__(self, size, config, render_mode = "wb_array"):
         
@@ -70,8 +70,7 @@ class SnakeEnv(gym.Env):
             }
         )
         
-        self.start = [0,0]
-        self.end = None
+
         #self.start = [0,0] if start is None else start
         #self.end = None if end is None else end # temporary, we don't want it to be unbounded
         #self._agent_location = self.start
@@ -111,6 +110,15 @@ class SnakeEnv(gym.Env):
     
     def _get_info(self):
         return {"body": self.body, "eaten_fruits": self.eaten_fruits, "done": self.done}
+    
+    def set_obs(self, obs):
+        self._agent_location = obs["agent"]
+        self._target_location = obs["target"]
+    
+    def set_info(self, info):
+        self.body = info["body"]
+        self.eaten_fruits = info["eaten_fruits"]
+        self.done = info["done"]
         
     def reset(self,seed=None, options=None):
         """
@@ -151,7 +159,7 @@ class SnakeEnv(gym.Env):
         self._agent_location += a
 
         # add a penalty for moving
-        reward = -1
+        reward = 0 # -1
 
         # Out of bounds case
         if (self._agent_location[0] == self.Ly):
@@ -181,9 +189,10 @@ class SnakeEnv(gym.Env):
             self.body = self.body[tmp[1]+1:]
             reward = NEGATVIE_REWARD
         else:
-            self.body.append(self._prev_agent_location)
-            # remove the last element of the body
-            self.body = self.body[1:]
+            if len(self.body) > 0:
+                self.body.append(self._prev_agent_location)
+                # remove the last element of the body
+                self.body = self.body[1:]
 
         
         # change the current position
