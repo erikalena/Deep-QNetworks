@@ -56,7 +56,7 @@ class SnakeEnv(gym.Env):
 
     metadata = {"render_modes": ["human"], "render_fps": 30}
     
-    def __init__(self, size, render_mode = "human"):
+    def __init__(self, size, render_mode = "human", no_back = False):
         
         # World shape
         self.Ly, self.Lx = size
@@ -75,6 +75,9 @@ class SnakeEnv(gym.Env):
         #self._agent_location = self.start
         #self._target_location = self.start # temporary
         self.body = []
+        
+        # If no_back is True, the agent cannot go back to the previous position
+        self.no_back = no_back
 
         self.done = False
 
@@ -150,15 +153,12 @@ class SnakeEnv(gym.Env):
         """
         Evolves the environment given action A and current state.
         """
-
-        a = self._action_to_direction[action] # action is an integer in [0,1,2,3]
+        selected_action = action[0]
+        a = self._action_to_direction[action[0]] # action is an integer in [0,1,2,3]
         self._prev_agent_location = copy.deepcopy(self._agent_location)
         
         # move the agent
         self._agent_location += a
-
-        # add a penalty for moving
-        reward = 0 # -1
 
         # Out of bounds case
         if (self._agent_location[0] == self.Ly):
@@ -169,6 +169,26 @@ class SnakeEnv(gym.Env):
             self._agent_location[1] = 0
         elif (self._agent_location[1] == -1):
             self._agent_location[1] = self.Lx - 1
+        
+        # if self.no_back = True and the agent is trying to go back, we select the second action
+        if self.no_back and len(self.body) > 0 and  np.all(self._agent_location == self.body[-1]):
+            self._agent_location = copy.deepcopy(self._prev_agent_location)
+            a = self._action_to_direction[action[1]] 
+            self._agent_location += a
+            # Out of bounds case
+            if (self._agent_location[0] == self.Ly):
+                self._agent_location[0] = 0
+            elif (self._agent_location[0] == -1):
+                self._agent_location[0] = self.Ly - 1
+            elif (self._agent_location[1] == self.Lx):
+                self._agent_location[1] = 0
+            elif (self._agent_location[1] == -1):
+                self._agent_location[1] = self.Lx - 1
+            selected_action = action[1]
+
+        
+        # add a penalty for moving
+        reward = 0 # -1
         
         # Target reached case
         if np.all(self._agent_location == self._target_location): ## this might not work
@@ -198,7 +218,7 @@ class SnakeEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, self.done, False, info # I don't knwo what the last False is for, just overriding
+        return observation, reward, self.done, selected_action, info # I don't knwo what the last False is for, just overriding
     
 
 
@@ -322,7 +342,6 @@ class SnakeAgent:
         num_actions: int,
         env: gym.Env,
         size: tuple[int, int],
-        device,
         discount_factor: float = 0.95,
         num_envs: int = 1,
     ):
@@ -342,7 +361,7 @@ class SnakeAgent:
         self.env = env
         self.num_envs = num_envs
         
-        self.device = device
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = DQN(in_channels =1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
         self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
@@ -400,7 +419,13 @@ class SnakeAgent:
         state = list(np.concatenate([state["agent"],state["target"]]))
         body = info["body"]
         if np.random.random() < self.epsilon:
-            return self.env.action_space.sample()
+            a = self.env.action_space.sample()
+            condition = True
+            while condition:
+                b = self.env.action_space.sample()
+                if a != b:
+                    condition = False
+            return [a,b]
 
         # with probability (1 - epsilon) act greedily (exploit)
         else:
@@ -408,7 +433,14 @@ class SnakeAgent:
             images = self.get_image(state, body) 
             input = torch.as_tensor(images, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(self.device)
             qs = self.model(input).cpu().data.numpy()
-            return np.argmax(qs)
+            a = np.argpartition(qs[0], -2)[-2:]
+            #print(f'qs: {qs}, a: {a}')
+            
+            # they might not be sorted
+            if qs[0][a[0]]<qs[0][a[1]]:
+                a = [a[1],a[0]]
+        
+            return a
     
     def get_mult_action(self, states, bodies) -> int:
         """

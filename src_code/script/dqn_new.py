@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 from src_code.buffers import SeqReplayBuffer
 from src_code.deep_qnetworks import DQN, SnakeEnv, SnakeAgent
@@ -33,6 +34,8 @@ class Config:
     max_steps_per_episode: int = 100000
     max_num_episodes: int = 10000
     deque_size: int = 100
+    no_back = True
+
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
@@ -62,7 +65,7 @@ def dqn_learning(CONFIG):
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
 
-    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y))
+    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), no_back=CONFIG.no_back)
 
     # model = DQN(
     #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
@@ -85,7 +88,7 @@ def dqn_learning(CONFIG):
         num_actions=env.action_space.n, # type: ignore
         env=env,
         size=(CONFIG.env_size_x, CONFIG.env_size_y),
-        device = CONFIG.device
+        #device = CONFIG.device
     )
 
     buffer = SeqReplayBuffer(size=CONFIG.buffer_size, device=CONFIG.device)
@@ -98,21 +101,21 @@ def dqn_learning(CONFIG):
     cur_frame = 0
     fruits_eaten_per_episode = []
     for episode in tqdm(range(CONFIG.max_num_episodes)):
-        obs, info = env.reset()
+        obs, info = copy.deepcopy(env.reset())
         terminated = False
         timestep = 0
         while not terminated:
             cur_frame += 1
             action = snake_agent.get_action(obs, info)
-            new_obs, reward, done, _, new_info = env.step(action)
+            new_obs, reward, done, selected_action, new_info = env.step(action)
             terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
             # Save actions and states in replay buffer
-            buffer.add(obs, action, reward, new_obs, done, info, new_info)
+            buffer.add(obs, selected_action, reward, new_obs, done, info, new_info)
 
             # Update obs and info
-            obs = new_obs
-            info = new_info
+            obs = copy.deepcopy(new_obs)
+            info = copy.deepcopy(new_info)
 
             cur_frame += 1
 
