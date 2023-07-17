@@ -49,7 +49,8 @@ class DQN(nn.Module):
 ##################################
 # Environment
 ##################################
-
+REWARD = 100
+NEGATVIE_REWARD = -100
 
 class SnakeEnv(gym.Env):
 
@@ -164,7 +165,7 @@ class SnakeEnv(gym.Env):
         # Target reached case
         if np.all(self._agent_location == self._target_location): ## this might not work
             #self.done = True       
-            reward = 100  # if we reach the reward we get a reward of 100
+            reward = REWARD  # if we reach the reward we get a reward of 100
             self.eaten_fruits += 1
             # add an element to the body
             self.body.append(self._prev_agent_location)
@@ -177,7 +178,7 @@ class SnakeEnv(gym.Env):
             self.done = True
             self.body.append(self._prev_agent_location)
             self.body = self.body[tmp[1]+1:]
-            reward = -1000
+            reward = NEGATVIE_REWARD
         else:
             self.body.append(self._prev_agent_location)
             # remove the last element of the body
@@ -312,6 +313,7 @@ class SnakeAgent:
         num_actions: int,
         env: gym.Env,
         size: tuple[int, int],
+        device,
         discount_factor: float = 0.95,
         num_envs: int = 1,
     ):
@@ -331,7 +333,7 @@ class SnakeAgent:
         self.env = env
         self.num_envs = num_envs
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.model = DQN(in_channels =1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
         self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
