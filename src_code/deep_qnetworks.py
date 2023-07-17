@@ -53,9 +53,9 @@ class DQN(nn.Module):
 
 class SnakeEnv(gym.Env):
 
-    metadata = {"render_modes": ["human","wb_array"], "render_fps": 30}
+    metadata = {"render_modes": ["human"], "render_fps": 30}
     
-    def __init__(self, size, render_mode = "wb_array"):
+    def __init__(self, size, render_mode = "human"):
         
         # World shape
         self.Ly, self.Lx = size
@@ -68,8 +68,7 @@ class SnakeEnv(gym.Env):
             }
         )
         
-        self.start = [0,0]
-        self.end = None
+
         #self.start = [0,0] if start is None else start
         #self.end = None if end is None else end # temporary, we don't want it to be unbounded
         #self._agent_location = self.start
@@ -109,6 +108,15 @@ class SnakeEnv(gym.Env):
     
     def _get_info(self):
         return {"body": self.body, "eaten_fruits": self.eaten_fruits, "done": self.done}
+    
+    def set_obs(self, obs):
+        self._agent_location = obs["agent"]
+        self._target_location = obs["target"]
+    
+    def set_info(self, info):
+        self.body = info["body"]
+        self.eaten_fruits = info["eaten_fruits"]
+        self.done = info["done"]
         
     def reset(self,seed=None, options=None):
         """
@@ -149,7 +157,7 @@ class SnakeEnv(gym.Env):
         self._agent_location += a
 
         # add a penalty for moving
-        reward = -1
+        reward = 0 # -1
 
         # Out of bounds case
         if (self._agent_location[0] == self.Ly):
@@ -164,7 +172,7 @@ class SnakeEnv(gym.Env):
         # Target reached case
         if np.all(self._agent_location == self._target_location): ## this might not work
             #self.done = True       
-            reward = 100  # if we reach the reward we get a reward of 100
+            reward = 200  # if we reach the reward we get a reward of 100
             self.eaten_fruits += 1
             # add an element to the body
             self.body.append(self._prev_agent_location)
@@ -179,9 +187,10 @@ class SnakeEnv(gym.Env):
             self.body = self.body[tmp[1]+1:]
             reward = -1000
         else:
-            self.body.append(self._prev_agent_location)
-            # remove the last element of the body
-            self.body = self.body[1:]
+            if len(self.body) > 0:
+                self.body.append(self._prev_agent_location)
+                # remove the last element of the body
+                self.body = self.body[1:]
 
         
         # change the current position
