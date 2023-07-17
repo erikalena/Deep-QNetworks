@@ -143,6 +143,9 @@ def dqn_learning(CONFIG):
                     optimizer,
                     CONFIG.device
                 )
+                os.makedirs(CONFIG.output_logdir + "/game_{}".format(episode), exist_ok=True)
+                snake_agent.save_random_image(states[0], bodies[0], CONFIG.output_logdir + "/game_{}/random_image.png".format(episode))
+
 
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
