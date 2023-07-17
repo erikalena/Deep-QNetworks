@@ -19,7 +19,10 @@ from dataclasses import dataclass
 import argparse
 import json
 import os
+import io
 import datetime
+
+from PIL import Image
 
 
 @dataclass
@@ -31,8 +34,8 @@ class Config:
     env_size_x: int = 20
     env_size_y: int = 20
     num_envs: int = 1
-    max_steps_per_episode: int = 100000
-    max_num_episodes: int = 10000
+    max_steps_per_episode: int = 10000
+    max_num_episodes: int = 500
     deque_size: int = 100
     no_back = True
 
@@ -41,6 +44,7 @@ class Config:
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     eps_learning_rate: float = 0.01
 
+    done_on_collision: bool = True
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
     epsilon_random_frames: int = 50000  # Number of frames for exploration
@@ -50,12 +54,40 @@ class Config:
     output_filename: str = "log.json"
     output_logdir: str = "results/orfeo"
     output_checkpoint_dir: str = "checkpoint/orfeo"
-    save_step: int = 50  # Save model every 100 episodes and log results
+    save_step: int = 1  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
 
 
 CONFIG = Config()
 
+
+def create_gif_from_plt_images(image_list, output_path, duration=200):
+    temp_image_folder = "temp_images"
+    os.makedirs(temp_image_folder, exist_ok=True)
+
+    images = []
+    for i, img_data in enumerate(image_list):
+        img_path = os.path.join(temp_image_folder, f"temp_{i}.png")
+        plt.imshow(img_data)
+        plt.axis('off')
+        with open(img_path, 'wb') as file:
+            plt.savefig(file, bbox_inches='tight', pad_inches=0)
+        plt.clf()
+        images.append(img_path)
+
+    gif_images = [Image.open(img) for img in images]
+
+    gif_images[0].save(
+        output_path,
+        save_all=True,
+        append_images=gif_images[1:],
+        duration=duration,
+        loop=0
+    )
+
+    # Clean up temporary images
+    for img_path in images:
+        os.remove(img_path)
 
 def dqn_learning(CONFIG):
     # Save configuration
@@ -65,6 +97,7 @@ def dqn_learning(CONFIG):
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
 
+<<<<<<< HEAD
     env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), no_back=CONFIG.no_back)
 
     # model = DQN(
@@ -77,6 +110,9 @@ def dqn_learning(CONFIG):
     # model = model.to(CONFIG.device)
     # model_target = model_target.to(CONFIG.device)
 
+=======
+    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
+>>>>>>> 39c94be2d1f6e38ee88d50e5617fc1fbe183af0f
 
     epsilon_decay = CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)
 
@@ -104,12 +140,19 @@ def dqn_learning(CONFIG):
         obs, info = copy.deepcopy(env.reset())
         terminated = False
         timestep = 0
+        frames = []
         while not terminated:
             cur_frame += 1
             action = snake_agent.get_action(obs, info)
             new_obs, reward, done, selected_action, new_info = env.step(action)
             terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
+            # 
+
+            tmp_state = np.concatenate( (new_obs["agent"], new_obs["target"]))
+            tmp_body = new_info["body"]
+            frame = snake_agent.get_image(tmp_state,tmp_body)
+            frames.append(frame)
             # Save actions and states in replay buffer
             buffer.add(obs, selected_action, reward, new_obs, done, info, new_info)
 
@@ -146,9 +189,7 @@ def dqn_learning(CONFIG):
                     optimizer,
                     CONFIG.device
                 )
-                os.makedirs(CONFIG.output_logdir + "/game_{}".format(episode), exist_ok=True)
-                snake_agent.save_random_image(states[0], bodies[0], CONFIG.output_logdir + "/game_{}/random_image.png".format(episode))
-
+        
 
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
@@ -160,7 +201,18 @@ def dqn_learning(CONFIG):
 
         fruits_eaten_per_episode.append(env.eaten_fruits)
         
+        
         if ((episode + 1) % CONFIG.save_step) == 0:
+            # Save episode in a gif
+            if timestep > 1000:
+                output_gif = CONFIG.output_logdir + "/game_ep_{}_1.gif".format(episode)
+                create_gif_from_plt_images(frames[0:500], output_gif, duration=200)
+                output_gif = CONFIG.output_logdir + "/game_ep_{}_2.gif".format(episode)
+                create_gif_from_plt_images(frames[-500:], output_gif, duration=200)
+            else:
+                output_gif = CONFIG.output_logdir + "/game_{}.gif".format(episode)
+                create_gif_from_plt_images(frames, output_gif, duration=200)
+        
             # write on file current average reward
             metrics = {
                 "return_queue": env.return_queue,

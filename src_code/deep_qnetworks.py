@@ -59,6 +59,7 @@ class SnakeEnv(gym.Env):
     def __init__(self, size, render_mode = "human", no_back = False):
         
         # World shape
+        self.config = config
         self.Ly, self.Lx = size
         self.window_size = 512  # The size of the PyGame window
         
@@ -203,7 +204,7 @@ class SnakeEnv(gym.Env):
                 np.array([0, 0]), np.array([self.Lx, self.Ly]), size=(2,), dtype=int)
         # Collision case
         elif (tmp:=self.check_collision())[0]: # I used warlus operator to avoid building tmp twice
-            # self.done = True
+            self.done = self.config.done_on_collision
             self.body.append(self._prev_agent_location)
             self.body = self.body[tmp[1]+1:]
             reward = NEGATVIE_REWARD
@@ -402,12 +403,7 @@ class SnakeAgent:
             if body[i][0] >= 0 and body[i][0] < self.size[0] and body[i][1] >= 0 and body[i][1] < self.size[1]:
                 image[int(body[i][0]), int(body[i][1])] = .1
         return image
-    
-    def save_random_image(self, state, body, image_name):
-        image = self.get_image(state, body)
-        plt.imshow(image)
-        plt.savefig(image_name)
-            
+
         
 
     def get_action(self, state, info) -> int:
