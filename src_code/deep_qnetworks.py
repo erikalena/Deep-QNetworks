@@ -56,7 +56,7 @@ class SnakeEnv(gym.Env):
 
     metadata = {"render_modes": ["human"], "render_fps": 30}
     
-    def __init__(self, size, config, render_mode = "wb_array"):
+    def __init__(self, size, config, render_mode = "human"):
         
         # World shape
         self.config = config

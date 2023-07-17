@@ -33,7 +33,7 @@ class Config:
     env_size_x: int = 20
     env_size_y: int = 20
     num_envs: int = 1
-    max_steps_per_episode: int = 100000
+    max_steps_per_episode: int = 10000
     max_num_episodes: int = 500
     deque_size: int = 100
     # epsilon
@@ -41,7 +41,7 @@ class Config:
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     eps_learning_rate: float = 0.01
 
-    done_on_collision: bool = False
+    done_on_collision: bool = True
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
     epsilon_random_frames: int = 50000  # Number of frames for exploration
@@ -95,17 +95,6 @@ def dqn_learning(CONFIG):
         json.dump(dict_json, f, indent=4)
 
     env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
-
-    # model = DQN(
-    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    # )
-    # model_target = DQN(
-    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    # )
-
-    # model = model.to(CONFIG.device)
-    # model_target = model_target.to(CONFIG.device)
-
 
     epsilon_decay = CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)
 
@@ -194,18 +183,13 @@ def dqn_learning(CONFIG):
 
         fruits_eaten_per_episode.append(env.eaten_fruits)
         
-
-
-
-        
-        
         
         if ((episode + 1) % CONFIG.save_step) == 0:
             # Save episode in a gif
             if timestep > 1000:
-                output_gif = CONFIG.output_logdir + "/game1_{}.gif".format(episode)
+                output_gif = CONFIG.output_logdir + "/game_ep_{}_1.gif".format(episode)
                 create_gif_from_plt_images(frames[0:500], output_gif, duration=200)
-                output_gif = CONFIG.output_logdir + "/game2_{}.gif".format(episode)
+                output_gif = CONFIG.output_logdir + "/game_ep_{}_2.gif".format(episode)
                 create_gif_from_plt_images(frames[-500:], output_gif, duration=200)
             else:
                 output_gif = CONFIG.output_logdir + "/game_{}.gif".format(episode)
