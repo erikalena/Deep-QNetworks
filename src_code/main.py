@@ -50,7 +50,7 @@ if __name__ == "__main__":
         game.play()
 
     elif mode == 2:
-        game = game(step=3, delay=0.2, model_path='../checkpoint/qlearnNN.pt') 
+        game = game(step=3, delay=0.2, model_path='../checkpoint/qlearnNN_body_len_3.pth', input_nodes=10)#'../checkpoint/qlearnNN.pt') 
         wn = game.create_environment()
         game.play()
 

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from src_code.qlearning import *
+from qlearning import *
 from torch.utils.data import DataLoader
 from collections import deque
 
@@ -67,11 +67,8 @@ class QLearnNN(nn.Module):
 
 
 
-class ReplayBuffer(object):  #! Substituted by SeqReplayBuffer
-    """
-    Replay buffer to store past experiences that the 
-    agent can then use for training the neural network.
-    """
+""" class ReplayBuffer(object):  #! Substituted by SeqReplayBuffer
+   
 
     def __init__(self, size, device:str = 'cpu'):
         self.buffer = deque(maxlen=size)
@@ -80,8 +77,6 @@ class ReplayBuffer(object):  #! Substituted by SeqReplayBuffer
     def add(self, state, action, reward, next_state, done):
         self.buffer.append((state, action, reward, next_state, done))
     
-    """ def add_multiple(self, states, actions, rewards, next_states, dones):
-        self.buffer.append((states[i], actions[i], rewards[i], next_states[i], dones[i])) """
 
     def __len__(self):
         return len(self.buffer)
@@ -109,10 +104,6 @@ class ReplayBuffer(object):  #! Substituted by SeqReplayBuffer
             
             
 class SeqReplayBuffer(object):
-    """
-    Replay buffer to store past experiences that the 
-    agent can then use for training the neural network.
-    """
 
     def __init__(self, size, device:str = 'cpu'):
         self.buffer = deque(maxlen=size)
@@ -145,7 +136,7 @@ class SeqReplayBuffer(object):
         rewards = torch.as_tensor(np.array(rewards, dtype=np.float32), device=self.device)
         next_states = torch.as_tensor(np.array(next_states, dtype=np.float32), device=self.device)
         dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
-        return states, actions, rewards, next_states, dones
+        return states, actions, rewards, next_states, dones """
 
   
 class customDataset(torch.utils.data.Dataset): #type: ignore

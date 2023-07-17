@@ -12,7 +12,7 @@ import torch
 
 class game():
 
-    def __init__(self, policy=None, model_path=None, nn_type=None, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
+    def __init__(self, policy=None, model_path=None, nn_type=None, input_nodes=4, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
 
         self.delay = delay
         self.score = 0
@@ -32,7 +32,7 @@ class game():
         turtle.setworldcoordinates(0, self.game_height, self.game_width, 0)
         self.wn = turtle.Screen()
         self.snake = turtle.Turtle()
-              
+        
        
         self.body = []
         self.food = turtle.Turtle()
@@ -42,6 +42,7 @@ class game():
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         self.type = None
+        self.input_nodes = input_nodes
         # if a model is specified, we use it to play the game
         if model_path != None and nn_type == 'cnn':
             self.Lx = self.Ly = int(self.game_width/10)
@@ -52,7 +53,7 @@ class game():
             self.model = model
             self.type = nn_type
         elif model_path != None:
-            model = QLearnNN(4,4).to(self.device) #   QNetwork(4, 4, 42)
+            model = QLearnNN(self.input_nodes,4).to(self.device) #   QNetwork(4, 4, 42)
             model.load_state_dict(torch.load(model_path))
             model.eval()
             self.model = model
@@ -153,7 +154,7 @@ class game():
             input = self.get_image(state)
             input = torch.tensor(input).unsqueeze(0).unsqueeze(0).to(self.device)
         else:
-            # x,y are normlized coordinates
+            # x,y are normalized coordinates
             x = self.snake.xcor()/ self.screen_width
             y = self.snake.ycor()/ self.screen_height
         
@@ -161,7 +162,22 @@ class game():
             goal_y = self.food.ycor()/ self.screen_height
 
             state = [y,x,goal_y, goal_x]
-            input = torch.tensor(state).unsqueeze(0).to(self.device)
+
+            if self.input_nodes > len(state):
+                full_state = np.ones(self.input_nodes)*(-.1)
+                full_state[:len(state)] = state
+
+                # if body is not empty
+                if len(self.body) > 0:
+                    for i in range(len(self.body)): # for each body segment
+                        idx = len(state) + i*2
+                        if idx < self.input_nodes:
+                            full_state[idx] = (self.body[i].xcor() /  self.screen_width)
+                            full_state[idx+1] = (self.body[i].ycor() /  self.screen_height)
+                    print(full_state)
+            else:
+                full_state = state
+            input = torch.tensor(full_state).unsqueeze(0).to(self.device)
 
         action = self.model(input.float())
         action = torch.argmax(action).item()
@@ -220,7 +236,6 @@ class game():
         return image
 
     def play(self):
-
         # Main game loop
         while True:
             self.wn.update()
@@ -250,6 +265,13 @@ class game():
                 
                 self.update_header(self.score, self.high_score)
 
+            # Check for head collision with the body segments
+            for segment in self.body:
+                #if segment.distance(self.snake) < self.step:
+                if self.snake.xcor() == segment.xcor() and self.snake.ycor() == segment.ycor():
+                    print('eaten')
+                    self.end_game()
+                    
             # Move the end segments first in reverse order
             for index in range(len(self.body)-1, 0, -1):
                 x = self.body[index-1].xcor() 
@@ -276,10 +298,7 @@ class game():
             if wall:
                 pass
 
-            # Check for head collision with the body segments
-            """ for segment in body:
-                if segment.distance(snake) < step:
-                    end_game() """
+            
 
             time.sleep(self.delay)
 
@@ -321,8 +340,8 @@ class game():
         self.food.penup()
         
         # find reward position
-        y = 30
-        x = 30
+        y = 20
+        x = 20
         self.reward_idx = int(y + x%self.step)
         self.food.goto(y,x)
         
@@ -361,5 +380,8 @@ class game():
         self.body.clear()
 
         # Reset the score
-        score = 0
-        self.update_header(score, self.high_score)
+        self.score = 0
+        self.update_header(self.score, self.high_score)
+
+        # reset the food
+        self.food.goto(30,30)

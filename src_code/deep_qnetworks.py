@@ -101,19 +101,16 @@ class SnakeEnv():
         for i in range(len(body)-1,0,-1):
             body[i] = list(body[i-1])
         
-        # update the first segment
-        if len(body) > 0:
-            body[0] = list(self.current_state)
-
+        
         # If we go out of the world, we enter from the other side
-        if (S_new[0] == self.Ly):
-            S_new[0] = 0
-        elif (S_new[0] == -1):
-            S_new[0] = self.Ly - 1
-        elif (S_new[1] == self.Lx):
-            S_new[1] = 0
-        elif (S_new[1] == -1):
-            S_new[1] = self.Lx - 1
+        if (head[0] == self.Ly):
+            head[0] = 0
+        elif (head[0] == -1):
+            head[0] = self.Ly - 1
+        elif (head[1] == self.Lx):
+            head[1] = 0
+        elif (head[1] == -1):
+            head[1] = self.Lx - 1
         elif np.all(head == goal):
             # self.done = True       
             reward = 100  # if we reach the reward we get a reward of 100
@@ -121,6 +118,11 @@ class SnakeEnv():
             self.points += 1 # if we eat the food we have a level of 1
             new_segment = body[-1] if len(body) > 0 else list(head)
             body.append(new_segment)
+        
+        # update the first segment
+        if len(body) > 0:
+            body[0] = list(self.current_state)
+
         
 
         # change the current position
