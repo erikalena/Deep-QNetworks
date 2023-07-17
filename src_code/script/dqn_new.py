@@ -31,13 +31,14 @@ class Config:
     env_size_y: int = 20
     num_envs: int = 1
     max_steps_per_episode: int = 100000
-    max_num_episodes: int = 10000
+    max_num_episodes: int = 500
     deque_size: int = 100
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     eps_learning_rate: float = 0.01
 
+    done_on_collision: bool = False
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
     epsilon_random_frames: int = 50000  # Number of frames for exploration
@@ -62,7 +63,7 @@ def dqn_learning(CONFIG):
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
 
-    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y))
+    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
 
     # model = DQN(
     #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
@@ -143,9 +144,7 @@ def dqn_learning(CONFIG):
                     optimizer,
                     CONFIG.device
                 )
-                os.makedirs(CONFIG.output_logdir + "/game_{}".format(episode), exist_ok=True)
-                snake_agent.save_random_image(states[0], bodies[0], CONFIG.output_logdir + "/game_{}/random_image.png".format(episode))
-
+        
 
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
