@@ -40,7 +40,7 @@ class Config:
 
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
-    epsilon_random_frames: int = 50000
+    epsilon_random_frames: int = 50000  # Number of frames for exploration
     epsilon_greedy_frames: float = 100000.0  # Number of frames for exploration
     buffer_size: int = 100000  # Size of the replay buffer
 
@@ -147,8 +147,8 @@ def dqn_learning(CONFIG):
                 snake_agent.model_target.load_state_dict(model.state_dict())
 
             timestep += 1
-
-        snake_agent.decay_epsilon()
+        if episode>CONFIG.epsilon_random_frames:
+            snake_agent.decay_epsilon()
 
         fruits_eaten_per_episode.append(env.eaten_fruits)
         
