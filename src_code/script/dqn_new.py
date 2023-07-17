@@ -30,7 +30,7 @@ class Config:
     env_size_x: int = 20
     env_size_y: int = 20
     num_envs: int = 1
-    max_steps_per_episode: int = 1000000
+    max_steps_per_episode: int = 100000
     max_num_episodes: int = 10000
     deque_size: int = 100
     # epsilon
@@ -45,8 +45,8 @@ class Config:
     buffer_size: int = 100000  # Size of the replay buffer
 
     output_filename: str = "log.json"
-    output_logdir: str = "results/local_fra"
-    output_checkpoint_dir: str = "checkpoint/local_fra"
+    output_logdir: str = "results/orfeo"
+    output_checkpoint_dir: str = "checkpoint/orfeo"
     save_step: int = 50  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
 
@@ -64,20 +64,16 @@ def dqn_learning(CONFIG):
 
     env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y))
 
-    model = DQN(
-        in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    )
-    model_target = DQN(
-        in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    )
+    # model = DQN(
+    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
+    # )
+    # model_target = DQN(
+    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
+    # )
 
-    model = model.to(CONFIG.device)
-    model_target = model_target.to(CONFIG.device)
+    # model = model.to(CONFIG.device)
+    # model_target = model_target.to(CONFIG.device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00025)
-    # huber loss
-    loss_function = nn.HuberLoss()
-    env = gym.wrappers.RecordEpisodeStatistics(env, deque_size=CONFIG.deque_size)  # type: ignore
 
     epsilon_decay = CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)
 
@@ -89,10 +85,16 @@ def dqn_learning(CONFIG):
         num_actions=env.action_space.n, # type: ignore
         env=env,
         size=(CONFIG.env_size_x, CONFIG.env_size_y),
+        device = CONFIG.device
     )
 
     buffer = SeqReplayBuffer(size=CONFIG.buffer_size, device=CONFIG.device)
 
+    optimizer = torch.optim.Adam(snake_agent.model.parameters(), lr=0.00025)
+    # huber loss
+    loss_function = nn.HuberLoss()
+    env = gym.wrappers.RecordEpisodeStatistics(env, deque_size=CONFIG.deque_size)  # type: ignore
+    
     cur_frame = 0
     fruits_eaten_per_episode = []
     for episode in tqdm(range(CONFIG.max_num_episodes)):
@@ -141,10 +143,13 @@ def dqn_learning(CONFIG):
                     optimizer,
                     CONFIG.device
                 )
+                os.makedirs(CONFIG.output_logdir + "/game_{}".format(episode), exist_ok=True)
+                snake_agent.save_random_image(states[0], bodies[0], CONFIG.output_logdir + "/game_{}/random_image.png".format(episode))
+
 
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
-                snake_agent.model_target.load_state_dict(model.state_dict())
+                snake_agent.model_target.load_state_dict(snake_agent.model.state_dict())
 
             timestep += 1
         if episode>CONFIG.epsilon_random_frames:
@@ -178,7 +183,7 @@ def dqn_learning(CONFIG):
                 snake_agent.model.state_dict(),
                 CONFIG.output_checkpoint_dir + "/model_{}".format(episode),
             )
-            save_fig(env, snake_agent, episode)
+            # save_fig(env, snake_agent, episode)
 
         # Condition to consider the task solved
         if np.mean(env.return_queue) > 500:  # type: ignore

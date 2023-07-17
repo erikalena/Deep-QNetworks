@@ -49,7 +49,8 @@ class DQN(nn.Module):
 ##################################
 # Environment
 ##################################
-
+REWARD = 100
+NEGATVIE_REWARD = -100
 
 class SnakeEnv(gym.Env):
 
@@ -172,7 +173,7 @@ class SnakeEnv(gym.Env):
         # Target reached case
         if np.all(self._agent_location == self._target_location): ## this might not work
             #self.done = True       
-            reward = 200  # if we reach the reward we get a reward of 100
+            reward = REWARD  # if we reach the reward we get a reward of 100
             self.eaten_fruits += 1
             # add an element to the body
             self.body.append(self._prev_agent_location)
@@ -182,10 +183,10 @@ class SnakeEnv(gym.Env):
                 np.array([0, 0]), np.array([self.Lx, self.Ly]), size=(2,), dtype=int)
         # Collision case
         elif (tmp:=self.check_collision())[0]: # I used warlus operator to avoid building tmp twice
-            self.done = True
+            # self.done = True
             self.body.append(self._prev_agent_location)
             self.body = self.body[tmp[1]+1:]
-            reward = -1000
+            reward = NEGATVIE_REWARD
         else:
             if len(self.body) > 0:
                 self.body.append(self._prev_agent_location)
@@ -321,6 +322,7 @@ class SnakeAgent:
         num_actions: int,
         env: gym.Env,
         size: tuple[int, int],
+        device,
         discount_factor: float = 0.95,
         num_envs: int = 1,
     ):
@@ -340,7 +342,7 @@ class SnakeAgent:
         self.env = env
         self.num_envs = num_envs
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.model = DQN(in_channels =1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
         self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
@@ -381,6 +383,11 @@ class SnakeAgent:
             if body[i][0] >= 0 and body[i][0] < self.size[0] and body[i][1] >= 0 and body[i][1] < self.size[1]:
                 image[int(body[i][0]), int(body[i][1])] = .1
         return image
+    
+    def save_random_image(self, state, body, image_name):
+        image = self.get_image(state, body)
+        plt.imshow(image)
+        plt.savefig(image_name)
             
         
 
