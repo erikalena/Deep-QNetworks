@@ -374,12 +374,7 @@ class SnakeAgent:
             if body[i][0] >= 0 and body[i][0] < self.size[0] and body[i][1] >= 0 and body[i][1] < self.size[1]:
                 image[int(body[i][0]), int(body[i][1])] = .1
         return image
-    
-    def save_random_image(self, state, body, image_name):
-        image = self.get_image(state, body)
-        plt.imshow(image)
-        plt.savefig(image_name)
-            
+
         
 
     def get_action(self, state, info) -> int:
