@@ -266,7 +266,7 @@ class GymSnakeEnv(gym.Env):
 
         # if the snake eats itself, add penalty
         if self._agent_location in self.body:
-            self.done = True
+           # self.done = True
             reward = -1000
 
         # update all the body segments in reverse order
