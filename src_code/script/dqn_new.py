@@ -15,7 +15,7 @@ from gymnasium import spaces
 
 import pickle
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import argparse
 import json
 import os
@@ -24,6 +24,7 @@ import datetime
 import logging
 
 from PIL import Image
+from typing import Dict, List, Tuple, Union
 
 
 @dataclass
@@ -35,14 +36,14 @@ class Config:
     env_size_x: int = 20
     env_size_y: int = 20
     num_envs: int = 1
-    max_steps_per_episode: int = 10000
+    max_steps_per_episode: int = 25
     max_num_episodes: int = 20000
     deque_size: int = 100
 
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
-    learning_rate: float = 0.0001
+
 
     no_back = True
     done_on_collision: bool = False
@@ -51,8 +52,8 @@ class Config:
     epsilon_random_frames: int = 50000  # Number of frames for exploration
     epsilon_greedy_frames: float = 100000.0  # Number of frames for exploration
     buffer_size: int = 100000  # Size of the replay buffer
-    eps_decay_per_episode: float = 0.01
-    reward: dict = {"eat": 40, "dead": -1, "step": 0}
+    eps_decay_per_episode: float = 0.001
+    reward: Dict[str, int] = field(default_factory=lambda: {"eat": 40, "dead": -1, "step": 0})
 
     output_filename: str = "log.json"
     output_logdir: str = "results/orfeo"
@@ -102,21 +103,11 @@ def dqn_learning(CONFIG):
 
     env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y),config=CONFIG)
 
-    # model = DQN(
-    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    # )
-    # model_target = DQN(
-    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
-    # )
-
-    # model = model.to(CONFIG.device)
-    # model_target = model_target.to(CONFIG.device)
 
 
     epsilon_decay = (CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)) * 100
 
     snake_agent = SnakeAgent(
-        learning_rate=CONFIG.learning_rate,
         initial_epsilon=CONFIG.epsilon_max,
         final_epsilon=CONFIG.epsilon_min,
         epsilon_decay=CONFIG.eps_decay_per_episode,
@@ -137,7 +128,8 @@ def dqn_learning(CONFIG):
     
     cur_frame = 0
     fruits_eaten_per_episode = []
-    for episode in tqdm(range(CONFIG.max_num_episodes)):
+    pbar = tqdm(total=CONFIG.max_num_episodes)
+    for episode in range(CONFIG.max_num_episodes):
         obs, info = copy.deepcopy(env.reset())
         terminated = False
         timestep = 0
@@ -249,7 +241,8 @@ def dqn_learning(CONFIG):
         if np.mean(env.return_queue) > 500:  # type: ignore
             print("Solved at episode {}!".format(episode))
             break
-
+        pbar.update(1)
+        pbar.set_description("Epsilon: {}".format(snake_agent.epsilon))
 
 def save_fig(env, snake_agent, episode):
     rolling_length = 500

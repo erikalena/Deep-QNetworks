@@ -9,6 +9,7 @@ import logging
 import gymnasium as gym
 from gymnasium import spaces
 import pygame
+import os
 
 
 
@@ -339,7 +340,6 @@ class SnakeEnv(gym.Env):
 class SnakeAgent:
     def __init__(
         self,
-        learning_rate: float,
         initial_epsilon: float,
         epsilon_decay: float,
         final_epsilon: float,
@@ -370,7 +370,7 @@ class SnakeAgent:
         self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
 
-        self.lr = learning_rate
+ 
         self.discount_factor = discount_factor
 
         self.epsilon = initial_epsilon
@@ -463,12 +463,16 @@ class SnakeAgent:
 
 
     def decay_epsilon(self):
-        print("Decaying epsilon from {}".format(self.epsilon))
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
-        print("Decaying epsilon to {}".format(self.epsilon))
     
     def load_model(self, checkpoint):
-        self.model.load_state_dict(torch.load(checkpoint))
-        self.model_target.load_state_dict(torch.load(checkpoint))
-        logging.info("Model loaded")
+        try:
+            os.path.isfile(checkpoint)
+            self.model.load_state_dict(torch.load(checkpoint))
+            self.model_target.load_state_dict(torch.load(checkpoint))
+            logging.info("Model loaded")
+        except:
+            logging.warning("Checkpoint not found, loading default model")
+            return
+        
         
