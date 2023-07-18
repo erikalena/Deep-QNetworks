@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 from src_code.buffers import SeqReplayBuffer
 from src_code.deep_qnetworks import DQN, SnakeEnv, SnakeAgent
@@ -37,11 +38,13 @@ class Config:
     max_steps_per_episode: int = 10000
     max_num_episodes: int = 20000
     deque_size: int = 100
+
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
     learning_rate: float = 0.0001
 
+    no_back = True
     done_on_collision: bool = False
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
@@ -97,7 +100,18 @@ def dqn_learning(CONFIG):
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
 
-    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
+    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y),config=CONFIG)
+
+    # model = DQN(
+    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
+    # )
+    # model_target = DQN(
+    #     in_channels=1, num_actions=env.action_space.n, input_size=CONFIG.env_size_x # type: ignore
+    # )
+
+    # model = model.to(CONFIG.device)
+    # model_target = model_target.to(CONFIG.device)
+
 
     epsilon_decay = (CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)) * 100
 
@@ -109,7 +123,7 @@ def dqn_learning(CONFIG):
         num_actions=env.action_space.n, # type: ignore
         env=env,
         size=(CONFIG.env_size_x, CONFIG.env_size_y),
-        device = CONFIG.device
+        #device = CONFIG.device
     )
     if CONFIG.load_checkpoint is not None:
         snake_agent.load_model(CONFIG.load_checkpoint)
@@ -123,8 +137,8 @@ def dqn_learning(CONFIG):
     
     cur_frame = 0
     fruits_eaten_per_episode = []
-    for episode in tqdm(range(CONFIG.max_num_episodes), desc="Epsilon:{}".format(snake_agent.epsilon)):
-        obs, info = env.reset()
+    for episode in tqdm(range(CONFIG.max_num_episodes)):
+        obs, info = copy.deepcopy(env.reset())
         terminated = False
         timestep = 0
         frames = []
@@ -132,7 +146,7 @@ def dqn_learning(CONFIG):
         while not terminated:
             cur_frame += 1
             action = snake_agent.get_action(obs, info)
-            new_obs, reward, done, _, new_info = env.step(action)
+            new_obs, reward, done, selected_action, new_info = env.step(action)
             terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
             # 
@@ -144,11 +158,11 @@ def dqn_learning(CONFIG):
                 frame = snake_agent.get_image(tmp_state,tmp_body)
                 frames.append(frame)
             # Save actions and states in replay buffer
-            buffer.add(obs, action, reward, new_obs, done, info, new_info)
+            buffer.add(obs, selected_action, reward, new_obs, done, info, new_info)
 
             # Update obs and info
-            obs = new_obs
-            info = new_info
+            obs = copy.deepcopy(new_obs)
+            info = copy.deepcopy(new_info)
 
             cur_frame += 1
 
