@@ -207,10 +207,10 @@ class SnakeEnv(gym.Env):
                 self._target_location = self.np_random.integers(
                 np.array([0, 0]), np.array([self.Lx, self.Ly]), size=(2,), dtype=int)
         # Collision case
-        elif (tmp:=self.check_collision())[0]: # I used warlus operator to avoid building tmp twice
+        elif (self.check_collision())[0]: # I used warlus operator to avoid building tmp twice
             self.done = self.config.done_on_collision
             self.body.append(self._prev_agent_location)
-            self.body = self.body[tmp[1]+1:]
+            self.body = self.body[1:]
             reward = self.config.reward["dead"]
         else:
             if len(self.body) > 0:
@@ -346,6 +346,7 @@ class SnakeAgent:
         num_actions: int,
         env: gym.Env,
         size: tuple[int, int],
+        device,
         discount_factor: float = 0.95,
         num_envs: int = 1,
     ):
@@ -365,7 +366,7 @@ class SnakeAgent:
         self.env = env
         self.num_envs = num_envs
         
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.model = DQN(in_channels =1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
         self.model_target = DQN(in_channels = 1, num_actions=self.num_actions, input_size=self.size[0]).to(self.device)
 
