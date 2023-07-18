@@ -20,6 +20,7 @@ import json
 import os
 import io
 import datetime
+import logging
 
 from PIL import Image
 
@@ -34,26 +35,28 @@ class Config:
     env_size_y: int = 20
     num_envs: int = 1
     max_steps_per_episode: int = 10000
-    max_num_episodes: int = 500
+    max_num_episodes: int = 20000
     deque_size: int = 100
     # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
     epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
-    eps_learning_rate: float = 0.01
+    learning_rate: float = 0.0001
 
-    done_on_collision: bool = True
+    done_on_collision: bool = False
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
     epsilon_random_frames: int = 50000  # Number of frames for exploration
     epsilon_greedy_frames: float = 100000.0  # Number of frames for exploration
     buffer_size: int = 100000  # Size of the replay buffer
+    eps_decay_per_episode: float = 0.01
+    reward: dict = {"eat": 40, "dead": -1, "step": 0}
 
     output_filename: str = "log.json"
     output_logdir: str = "results/orfeo"
     output_checkpoint_dir: str = "checkpoint/orfeo"
-    save_step: int = 1  # Save model every 100 episodes and log results
+    save_step: int = 100  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
-
+    load_checkpoint: str = "checkpoint/18340/model_99"
 
 CONFIG = Config()
 
@@ -96,18 +99,20 @@ def dqn_learning(CONFIG):
 
     env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
 
-    epsilon_decay = CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)
+    epsilon_decay = (CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)) * 100
 
     snake_agent = SnakeAgent(
-        learning_rate=CONFIG.eps_learning_rate,
+        learning_rate=CONFIG.learning_rate,
         initial_epsilon=CONFIG.epsilon_max,
         final_epsilon=CONFIG.epsilon_min,
-        epsilon_decay=epsilon_decay,
+        epsilon_decay=CONFIG.eps_decay_per_episode,
         num_actions=env.action_space.n, # type: ignore
         env=env,
         size=(CONFIG.env_size_x, CONFIG.env_size_y),
         device = CONFIG.device
     )
+    if CONFIG.load_checkpoint is not None:
+        snake_agent.load_model(CONFIG.load_checkpoint)
 
     buffer = SeqReplayBuffer(size=CONFIG.buffer_size, device=CONFIG.device)
 
@@ -118,11 +123,12 @@ def dqn_learning(CONFIG):
     
     cur_frame = 0
     fruits_eaten_per_episode = []
-    for episode in tqdm(range(CONFIG.max_num_episodes)):
+    for episode in tqdm(range(CONFIG.max_num_episodes), desc="Epsilon:{}".format(snake_agent.epsilon)):
         obs, info = env.reset()
         terminated = False
         timestep = 0
         frames = []
+        rewards_per_episode = []
         while not terminated:
             cur_frame += 1
             action = snake_agent.get_action(obs, info)
@@ -130,11 +136,13 @@ def dqn_learning(CONFIG):
             terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
             # 
-
+            rewards_per_episode.append(reward)
             tmp_state = np.concatenate( (new_obs["agent"], new_obs["target"]))
             tmp_body = new_info["body"]
-            frame = snake_agent.get_image(tmp_state,tmp_body)
-            frames.append(frame)
+            
+            if timestep < 1002 or timestep > CONFIG.max_steps_per_episode-502:
+                frame = snake_agent.get_image(tmp_state,tmp_body)
+                frames.append(frame)
             # Save actions and states in replay buffer
             buffer.add(obs, action, reward, new_obs, done, info, new_info)
 
@@ -173,16 +181,16 @@ def dqn_learning(CONFIG):
                 )
         
 
+
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
                 snake_agent.model_target.load_state_dict(snake_agent.model.state_dict())
 
             timestep += 1
-        if episode>CONFIG.epsilon_random_frames:
-            snake_agent.decay_epsilon()
+        # if episode>CONFIG.epsilon_random_frames: 
+        snake_agent.decay_epsilon()
 
         fruits_eaten_per_episode.append(env.eaten_fruits)
-        
         
         if ((episode + 1) % CONFIG.save_step) == 0:
             # Save episode in a gif
@@ -206,6 +214,7 @@ def dqn_learning(CONFIG):
             file["episode_{}".format(episode)] = {
                 "training_error": str(np.mean(snake_agent.training_error)),
                 "mean_eaten": np.mean(fruits_eaten_per_episode),
+                "mean_reward": np.mean(rewards_per_episode),
                 "eatens": env.eaten_fruits,
                 "epsilon": str(snake_agent.epsilon),
                 }
@@ -278,7 +287,7 @@ if __name__ == "__main__":
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
     )
-
+    
     os.makedirs(CONFIG.output_logdir, exist_ok=True)
     os.makedirs(CONFIG.output_checkpoint_dir, exist_ok=True)
     dqn_learning(CONFIG)

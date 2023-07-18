@@ -49,8 +49,8 @@ class DQN(nn.Module):
 ##################################
 # Environment
 ##################################
-REWARD = 100
-NEGATVIE_REWARD = -100
+REWARD = 10
+NEGATVIE_REWARD = -1
 
 class SnakeEnv(gym.Env):
 
@@ -159,7 +159,7 @@ class SnakeEnv(gym.Env):
         self._agent_location += a
 
         # add a penalty for moving
-        reward = 0 # -1
+        reward = self.config.reward["step"]
 
         # Out of bounds case
         if (self._agent_location[0] == self.Ly):
@@ -174,7 +174,7 @@ class SnakeEnv(gym.Env):
         # Target reached case
         if np.all(self._agent_location == self._target_location): ## this might not work
             #self.done = True       
-            reward = REWARD  # if we reach the reward we get a reward of 100
+            reward = self.config.reward["eat"]  # if we reach the reward we get a reward of 100
             self.eaten_fruits += 1
             # add an element to the body
             self.body.append(self._prev_agent_location)
@@ -187,7 +187,7 @@ class SnakeEnv(gym.Env):
             self.done = self.config.done_on_collision
             self.body.append(self._prev_agent_location)
             self.body = self.body[tmp[1]+1:]
-            reward = NEGATVIE_REWARD
+            reward = self.config.reward["dead"]
         else:
             if len(self.body) > 0:
                 self.body.append(self._prev_agent_location)
@@ -373,7 +373,7 @@ class SnakeAgent:
             image[int(state[2]), int(state[3])] = .5
 
         if state[0] >= 0 and state[0] < self.size[0] and state[1] >= 0 and state[1] < self.size[1]:
-            image[int(state[0]), int(state[1])] = 1
+            image[int(state[0]), int(state[1])] += 1
         else:
             # if the agent is out of the world, it is dead and so we cancel the food as well
             # this check is just for safety reasons, if we allow the snake to go through the walls
@@ -382,7 +382,7 @@ class SnakeAgent:
             
         for i in range(len(body)):
             if body[i][0] >= 0 and body[i][0] < self.size[0] and body[i][1] >= 0 and body[i][1] < self.size[1]:
-                image[int(body[i][0]), int(body[i][1])] = .1
+                image[int(body[i][0]), int(body[i][1])] += .1
         return image
 
         
@@ -428,6 +428,12 @@ class SnakeAgent:
 
 
     def decay_epsilon(self):
+        print("Decaying epsilon from {}".format(self.epsilon))
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
+        print("Decaying epsilon to {}".format(self.epsilon))
     
-    
+    def load_model(self, checkpoint):
+        self.model.load_state_dict(torch.load(checkpoint))
+        self.model_target.load_state_dict(torch.load(checkpoint))
+        logging.info("Model loaded")
+        
