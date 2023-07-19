@@ -70,8 +70,6 @@ where:
 In the results folder, a `log.json` file is created with all the configuration of the network and the hyperparameters used. It's also save statistics of the training each `<save-step-per-episode>` The checkpoints are saved in the `checkpoints` folder.
 A folder `GIF` is also created, where the GIFs of the first and last 500 step of an episode are saved.
 
-### GYM 
-
 ### Results
 
 See how the model behaves:
