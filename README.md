@@ -10,6 +10,14 @@ The aim of the project was to implement Deep QNetworks, following the descriptio
 Instead of directly implementing DQN using CNNs, we progressively build up different models, starting from basic Qlearning algorithms and moving towards MLP, in order to deal with increasing complexity of the game. 
 The code for all the trials we made is available, along with one simple version of Snake game, which can be played using all the models trained, from standard tabular methods to DQN.
 
+## Content
+
+The are four main folders: 
+- *game* folder: it contains the code to load a pretrained model and play;
+- *notebook* folder: it contains step-by-step explanations of what was implemented, one notebook is available for basic QLearning, QNetworks and DQN;
+- *results* folder: it contains the results obtained along with the different models configurations and the corresponding trained models to be used to play the game;
+- *src_code* folder: it contains the implementation of each model and it is divided into the subsections of incremental complexity, which lead us to implementation of DQN. 
+
 
 ## Requirements
 
@@ -19,14 +27,18 @@ The other libraries used are in the file requirements.txt.
 
 ## Usage
 
-To play the game using models that implement the full version of snake, download th repository and move to *src_code* folder, then run the main script using MLP or CNNs as you prefer.
+To play the game using models that implement the full version of snake, download the repository and move to *game* folder, then run the main script using the desired mode.
+**Mode** can be: 
+- human
+- policy (simple Qlearning algorithm, just for simplest version of the game)
+- mlp (a Qnetwork trained to play the full version of the game)
+- cnn (full implementation of DQN to play snake)
 
 ```bash
-cd src_code
-python main.py [mlp | cnn]
+cd game
+python main.py [mode]
 ```
-
-An already trained version is available for both the models, but new versions can be trained as well.
+In results, already trained versions of different models are available, otherwise the user can train and load new ones.
 
 ### How to train MLP
 
@@ -35,7 +47,7 @@ In results file, the configuration of the network, along with all hyperparameter
 
 ```bash
 cd src_code/mlp
-python train_mlp.py
+python train.py
 ```
 
 ### How to train CNN
@@ -60,11 +72,11 @@ A folder `GIF` is also created, where the GIFs of the first and last 500 step of
 
 ### GYM 
 
+### Results
 
-# TODO:
-- [ ] ? Remove wall transparency
-- [ ]  Add point/level system to vectorized version
-- [ ]  check input cnn and epsilon decay
-- [x] ? Vectorize the game (for speed)
-- [x] Add DDQN 
-- [ ] Add a `requirements.txt` file
+See how the model behaves:
+
+- after ~ 70000 episodes
+
+  
+![](game/captures/mlp_70000.gif)
