@@ -45,7 +45,7 @@ class game():
         # if a model is specified, we use it to play the game
         if model_path != None and nn_type == 'cnn':
             self.Lx = self.Ly = int(self.game_width/20)
-            model = DQN(in_channels =1, num_actions=4, input_size=self.Lx)
+            model = DQN(in_channels=1, num_actions=4, input_size=self.Lx)
             # read the model from file in which we have model, optimizer, and statistics
             # read model_path
             checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
@@ -55,7 +55,7 @@ class game():
             self.model = model
             self.type = nn_type
         elif model_path != None:
-            model = QLearnNN(self.input_nodes,4).to(self.device) #   QNetwork(4, 4, 42)
+            model = QLearnNN(self.input_nodes,4).to(self.device) 
             model.load_state_dict(torch.load(model_path))
             model.eval()
             self.model = model
@@ -113,7 +113,7 @@ class game():
 
         if self.snake.direction == "up" :
             if self.snake.ycor() <= 0:
-                self.snake.sety(self.screen_height )
+                self.snake.sety(self.screen_height)
                 wall = True
             else:
                 y = self.snake.ycor()
@@ -135,14 +135,16 @@ class game():
                 x = self.snake.xcor()
                 self.snake.setx(x + self.step)
         
+        # check for collision with food
+        self.check_food_collision()
+
         # move the body segments
         self.move_segments(prev_pos)
 
         # check for collision with body
         self.check_body_collision()
 
-        # check for collision with food
-        self.check_food_collision()
+        
 
         
 
@@ -179,10 +181,11 @@ class game():
         
     
         if self.type == 'cnn':
-            x = int(self.snake.xcor()*self.Lx/self.screen_width)
-            y = int(self.snake.ycor()*self.Ly/self.screen_height)
-            goal_x = int(self.food.xcor()*self.Lx/self.screen_width)
-            goal_y = int(self.food.ycor()*self.Ly/self.screen_height)
+           
+            x = int(self.snake.xcor()/self.Lx)
+            y = int(self.snake.ycor()/self.Ly)
+            goal_x = int(self.food.xcor()/self.Lx)
+            goal_y = int(self.food.ycor()/self.Ly)
             state = [y,x,goal_y, goal_x]
             input = self.get_image(state)
             input = torch.tensor(input).unsqueeze(0).unsqueeze(0).to(self.device)
@@ -268,7 +271,9 @@ class game():
                 and y < self.Ly
             ):
                 image[int(x), int(y)] += .1
-            
+
+        
+
         return image
     
     def check_food_collision(self):
@@ -334,7 +339,7 @@ class game():
             step += 1
             # Create the file name based on the screenshot number
             num = '{:03d}'.format(step)
-            #self.get_screenshot(num)
+            self.get_screenshot(num)
             
     
     def get_screenshot(self, num):

@@ -131,6 +131,7 @@ def dqn_learning(CONFIG):
     env = gym.wrappers.RecordEpisodeStatistics(env, deque_size=CONFIG.deque_size)  # type: ignore
 
     cur_frame = 0
+    rewards_per_episode = []
     fruits_eaten_per_episode = []
     pbar = tqdm(total=CONFIG.max_num_episodes)
     tot_step = 0
@@ -139,7 +140,7 @@ def dqn_learning(CONFIG):
         terminated = False
         timestep = 0
         frames = []
-        rewards_per_episode = []
+        sum_reward = 0
         n_step_per_episode = []
         while not terminated:
             cur_frame += 1
@@ -149,7 +150,7 @@ def dqn_learning(CONFIG):
             terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
             #
-            rewards_per_episode.append(reward)
+            sum_reward += reward
             tmp_state = np.concatenate((obs["agent"], obs["target"]))
             tmp_body = info["body"]
 
@@ -209,6 +210,7 @@ def dqn_learning(CONFIG):
         # snake_agent.decay_epsilon()
 
         fruits_eaten_per_episode.append(env.eaten_fruits)
+        rewards_per_episode.append(sum_reward)
 
         if ((episode + 1) % CONFIG.save_step) == 0:
             # Save episode in a gif
