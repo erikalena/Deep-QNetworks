@@ -12,6 +12,12 @@ The code for all the trials we made is available, along with one simple version 
 
 ## Content
 
+The are four main folders: 
+- *game* folder: it contains the code to load a pretrained model and play;
+- *notebook* folder: it contains step-by-step explanations of what was implemented, one notebook is available for basic QLearning, QNetworks and DQN;
+- *results* folder: it contains the results obtained along with the different models configurations and the corresponding trained models to be used to play the game;
+- *src_code* folder: it contains the implementation of each model and it is divided into the subsections of incremental complexity, which lead us to implementation of DQN. 
+
 
 ## Requirements
 
@@ -41,7 +47,7 @@ In results file, the configuration of the network, along with all hyperparameter
 
 ```bash
 cd src_code/mlp
-python train_mlp.py
+python train.py
 ```
 
 ### How to train CNN
