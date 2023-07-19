@@ -71,3 +71,10 @@ In the results folder, a `log.json` file is created with all the configuration o
 A folder `GIF` is also created, where the GIFs of the first and last 500 step of an episode are saved.
 
 ### GYM 
+
+### Results
+
+See how the model behaves:
+
+- after ~ 70000 episodes
+![](game/mlp_70000.gif)
