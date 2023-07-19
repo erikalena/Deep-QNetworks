@@ -67,6 +67,6 @@ if __name__ == "__main__":
         game.play()
 
     elif mode == 'cnn':
-        game = game(step=5, delay=0.1, model_path='../results/cnn/trained_models/model_19999', nn_type='cnn')
+        game = game(step=10, delay=0.1, model_path='../results/cnn/trained_models/model_19999', nn_type='cnn')
         wn = game.create_environment()
         game.play()

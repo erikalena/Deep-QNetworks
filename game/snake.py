@@ -338,7 +338,7 @@ class game():
             
     
     def get_screenshot(self, num):
-        file_name = f"captures/screenshot_{num}.png"
+        file_name = f"captures/cnn/screenshot_{num}.png"
 
         # Get the turtle window coordinates
         x, y = self.get_turtle_window_coordinates()
