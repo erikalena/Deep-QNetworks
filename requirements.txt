@@ -1,0 +1,13 @@
+cuda-toolkit              11.3.1             
+cuda-tools                11.3.1             
+gym                       0.26.2                   
+gym-notices               0.0.8                    
+gymnasium                 0.28.1                
+matplotlib                3.5.1            
+numpy                     1.24.1              
+pygame                    2.1.0               
+python                    3.9.5      
+pytorch                   1.11.0         
+torch-summary             1.4.5                
+torchaudio                0.11.0              
+torchvision               0.12.0                 

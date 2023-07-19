@@ -45,7 +45,7 @@ class game():
         self.input_nodes = input_nodes
         # if a model is specified, we use it to play the game
         if model_path != None and nn_type == 'cnn':
-            self.Lx = self.Ly = int(self.game_width/10)
+            self.Lx = self.Ly = int(self.game_width/20)
             model = DQN(in_channels =1, num_actions=4, input_size=self.Lx)
             model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             model.eval()
@@ -77,8 +77,24 @@ class game():
         self.tarted = True
         self.snake.direction = "right"
 
+    def move_segments(self, prev_pos):
+        # Move the end segments first in reverse order
+        for index in range(len(self.body)-1, 0, -1):
+            x = self.body[index-1].xcor() 
+            y = self.body[index-1].ycor() 
+    
+            self.body[index].goto(x, y)
+
+        # Move segment 0 to where the head is
+        if len(self.body) > 0:
+            x = self.snake.xcor()
+            y = self.snake.ycor()
+        
+            self.body[0].goto(prev_pos[0], prev_pos[1])
+
     def move(self):
         wall = False # true if snake hits wall
+        prev_pos = [self.snake.xcor(), self.snake.ycor()]
 
         # if conditions are not met, snake will not move
         if self.snake.direction == "down":
@@ -112,6 +128,17 @@ class game():
             else:
                 x = self.snake.xcor()
                 self.snake.setx(x + self.step)
+        
+        # move the body segments
+        self.move_segments(prev_pos)
+
+        # check for collision with body
+        self.check_body_collision()
+
+        # check for collision with food
+        self.check_food_collision()
+
+        
 
         return wall
 
@@ -155,26 +182,29 @@ class game():
             input = torch.tensor(input).unsqueeze(0).unsqueeze(0).to(self.device)
         else:
             # x,y are normalized coordinates
-            x = self.snake.xcor()/ self.screen_width
-            y = self.snake.ycor()/ self.screen_height
+            x = (self.snake.xcor() + self.step)/ self.screen_width
+            y = (self.snake.ycor() + self.step)/ self.screen_height
         
-            goal_x = self.food.xcor()/ self.screen_width
-            goal_y = self.food.ycor()/ self.screen_height
+            goal_x = (self.food.xcor()+self.step)/ self.screen_width
+            goal_y = (self.food.ycor()+self.step)/ self.screen_height
 
             state = [y,x,goal_y, goal_x]
+            print('state', state)
 
             if self.input_nodes > len(state):
-                full_state = np.ones(self.input_nodes)*(-.1)
-                full_state[:len(state)] = state
+                #full_state = np.ones(self.input_nodes)*(-.01)
+                full_state = np.zeros(self.input_nodes)
+                full_state[:len(state)] = state 
 
                 # if body is not empty
                 if len(self.body) > 0:
                     for i in range(len(self.body)): # for each body segment
                         idx = len(state) + i*2
                         if idx < self.input_nodes:
-                            full_state[idx] = (self.body[i].xcor() /  self.screen_width)
-                            full_state[idx+1] = (self.body[i].ycor() /  self.screen_height)
-                    print(full_state)
+                            full_state[idx] = (self.body[i].ycor() + self.step)/  self.screen_height
+                            full_state[idx+1] = (self.body[i].xcor() + self.step)/  self.screen_width
+                
+                print(full_state)
             else:
                 full_state = state
             input = torch.tensor(full_state).unsqueeze(0).to(self.device)
@@ -234,59 +264,51 @@ class game():
                 image[int(self.body[i][0]), int(self.body[i][1])] = .1
             
         return image
+    
+    def check_food_collision(self):
+        # Check for a collision with the food
+        if self.snake.distance(self.food) <= self.step:
+
+            # Move the food to a random spot
+            x = random.randint(0, self.screen_width)
+            y = random.randint(0, self.screen_height)
+
+            # if the space is discretized and we are using a policy
+            # we need to find the closest discretized coordinate
+            if self.policy is not None:
+                x = int(x/self.step)*self.step
+                y = int(y/self.step)*self.step
+            else:
+                x = x - (x % self.step)
+                y = y - (y % self.step)
+
+            print('food', x,y)
+            self.food.goto(y,x)
+
+            # add a segment to the snake
+            self.add_segment()
+
+            self.score += 10
+
+            if self.score > self.high_score:
+                self.high_score = self.score
+            
+            self.update_header(self.score, self.high_score)
+
+    def check_body_collision(self):
+        # Check for head collision with the body segments
+        for segment in self.body:
+            #if segment.distance(self.snake) < self.step:
+            if self.snake.xcor() == segment.xcor() and self.snake.ycor() == segment.ycor():
+                self.end_game()
+                print('died')
 
     def play(self):
+        #self.snake.goto(40,60)
         # Main game loop
         while True:
             self.wn.update()
 
-            # Check for a collision with the food
-            if self.snake.distance(self.food) < self.step*2:
-
-                # Move the food to a random spot
-                x = random.randint(0, self.screen_width)
-                y = random.randint(0, self.screen_height)
-
-                # if the space is discretized and we are using a policy
-                # we need to find the closest discretized coordinate
-                if self.policy is not None:
-                    x = int(x/self.step)*self.step
-                    y = int(y/self.step)*self.step
-
-                self.food.goto(y,x)
-
-                # add a segment to the snake
-                self.add_segment()
-
-                self.score += 10
-
-                if self.score > self.high_score:
-                    self.high_score = self.score
-                
-                self.update_header(self.score, self.high_score)
-
-            # Check for head collision with the body segments
-            for segment in self.body:
-                #if segment.distance(self.snake) < self.step:
-                if self.snake.xcor() == segment.xcor() and self.snake.ycor() == segment.ycor():
-                    print('eaten')
-                    self.end_game()
-                    
-            # Move the end segments first in reverse order
-            for index in range(len(self.body)-1, 0, -1):
-                x = self.body[index-1].xcor() 
-                y = self.body[index-1].ycor() 
-        
-                self.body[index].goto(x, y)
-
-            # Move segment 0 to where the head is
-            if len(self.body) > 0:
-                x = self.snake.xcor()
-                y = self.snake.ycor()
-            
-                self.body[0].goto(x,y)
-
-        
             if self.policy is not None:
                 wall = self.follow_policy()  
             elif self.model is not None:
@@ -297,8 +319,6 @@ class game():
             # if we touched the wall, decide what to do
             if wall:
                 pass
-
-            
 
             time.sleep(self.delay)
 
@@ -366,6 +386,14 @@ class game():
         new_segment.color("#0cab17")
         new_segment.penup()
         self.body.append(new_segment)
+        # set the position of the new segment
+        # to the position of the last segment
+        if len(self.body) == 1:
+            new_segment.goto(self.snake.xcor(), self.snake.ycor())
+        else:
+            x = self.body[-2].xcor()
+            y = self.body[-2].ycor()
+            self.body[-1].goto(x, y)
 
 
     def end_game(self):
