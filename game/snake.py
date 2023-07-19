@@ -6,13 +6,12 @@ import pickle
 from qnetworks import *
 from cnn.agent import DQN
 import torch
-
-
-
+import time
+from PIL import ImageGrab
 
 class game():
 
-    def __init__(self, policy=None, model_path=None, nn_type=None, input_nodes=4, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5):
+    def __init__(self, policy=None, model_path=None, nn_type=None, input_nodes=4, screen_width= 90, screen_height= 90, step= 10, delay= 0.5, border_size= -5, get_statistics = False):
 
         self.delay = delay
         self.score = 0
@@ -47,7 +46,10 @@ class game():
         if model_path != None and nn_type == 'cnn':
             self.Lx = self.Ly = int(self.game_width/20)
             model = DQN(in_channels =1, num_actions=4, input_size=self.Lx)
-            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+            # read the model from file in which we have model, optimizer, and statistics
+            # read model_path
+            checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
+            model.load_state_dict(checkpoint['model_state_dict'])
             model.eval()
             model.to(self.device)
             self.model = model
@@ -60,6 +62,10 @@ class game():
         else:
             self.model = None
 
+        self.get_statistics = get_statistics
+        """ if self.get_statistics:
+            with open('statistics/statistics.txt', 'wb') as f:
+                f.write('body length, score\n'.encode()) """
 
     def go_up(self):
         self.started = True
@@ -246,7 +252,7 @@ class game():
             and head[1] >= 0 
             and head[1] < self.Ly
         ):
-            image[int(head[0]), int(head[1])] = 1
+            image[int(head[0]), int(head[1])] += 1
         else:
             # if the agent is out of the world, it is dead and so we cancel the food and the body as well
             # this check is just for safety reasons, if we allow the snake to go through the walls
@@ -254,12 +260,14 @@ class game():
             image[int(goal[0]), int(goal[0])] = 0 
             
         for i in range(len(self.body)):
-            if (self.body[i][0] >= 0 
-                and self.body[i][0] < self.Lx 
-                and self.body[i][1] >= 0 
-                and self.body[i][1] < self.Ly
+            y = (self.body[i].ycor() + self.step)/  self.screen_height
+            x = (self.body[i].xcor() + self.step)/  self.screen_width
+            if (x >= 0 
+                and x < self.Lx 
+                and y >= 0 
+                and y < self.Ly
             ):
-                image[int(self.body[i][0]), int(self.body[i][1])] = .1
+                image[int(x), int(y)] += .1
             
         return image
     
@@ -297,11 +305,15 @@ class game():
         for segment in self.body:
             #if segment.distance(self.snake) < self.step:
             if self.snake.xcor() == segment.xcor() and self.snake.ycor() == segment.ycor():
+                if self.get_statistics:
+                    # write on file 
+                    with open('statistics/statistics.txt', 'a') as f:
+                        f.write(f'{len(self.body)},{self.score}\n')
                 self.end_game()
 
     def play(self):
-        #self.snake.goto(40,60)
         # Main game loop
+        step = 0
         while True:
             self.wn.update()
 
@@ -318,6 +330,34 @@ class game():
 
             time.sleep(self.delay)
 
+            
+            step += 1
+            # Create the file name based on the screenshot number
+            num = '{:03d}'.format(step)
+            #self.get_screenshot(num)
+            
+    
+    def get_screenshot(self, num):
+        file_name = f"captures/screenshot_{num}.png"
+
+        # Get the turtle window coordinates
+        x, y = self.get_turtle_window_coordinates()
+
+        # Take a screenshot of the turtle window and save it with the file name
+        #screenshot = ImageGrab.grab(bbox=(x+10, y+10, x + 3000, y + 3000))
+        screenshot = ImageGrab.grab(bbox=(x, y, x + self.wn.window_width(), y + self.wn.window_height()))
+
+        screenshot.save(file_name)
+        
+    # Function to get the turtle window coordinates
+    def get_turtle_window_coordinates(self):
+        """ x = self.wn._canvas.winfo_x() + self.wn._root.winfo_x()
+        y = self.wn._canvas.winfo_y() + self.wn._root.winfo_y() """
+        # take x,y of game window
+        x = self.wn._root.winfo_x()
+        y = self.wn._root.winfo_y()
+
+        return (x, y)
 
 
     def create_environment(self):
@@ -409,3 +449,4 @@ class game():
 
         # reset the food
         self.food.goto(30,30)
+

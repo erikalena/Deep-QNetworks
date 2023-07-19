@@ -62,11 +62,11 @@ if __name__ == "__main__":
         game.play()
 
     elif mode == 'mlp':
-        game = game(step=5, delay=0.1, model_path='../results/mlp/trained_models/model_10000.pth', input_nodes=24)#'../checkpoint/qlearnNN.pt') 
+        game = game(step=5, delay=0.1, model_path='../results/mlp/trained_models/model_10000.pth', input_nodes=24, get_statistics=True)#'../checkpoint/qlearnNN.pt') 
         wn = game.create_environment()
         game.play()
 
     elif mode == 'cnn':
-        game = game(step=3, delay=0.2, model_path='../results/17248/model_2000.pth', nn_type='cnn')
+        game = game(step=5, delay=0.1, model_path='../results/cnn/trained_models/model_19999', nn_type='cnn')
         wn = game.create_environment()
         game.play()
