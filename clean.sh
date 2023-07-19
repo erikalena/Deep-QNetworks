@@ -4,10 +4,9 @@
 folder_name="$1"
 
 # Check if the folder exists
-if [ -d "checkpoint/$folder_name" ]; then
+if [ -d "results/cnn/$folder_name" ]; then
   # Remove the folder
-  rm -r "checkpoint/$folder_name"
-  rm -r "results/$folder_name"
+  rm -r "checkpoint/cnn/$folder_name"
   rm "my_job_$folder_name.out"
   rm "my_job_$folder_name.err"
   echo "Folder '$folder_name' removed successfully."

@@ -60,11 +60,11 @@ class Config:
     )
 
     output_filename: str = "log.json"
-    output_logdir: str = "results/orfeo"
-    output_checkpoint_dir: str = "checkpoint/orfeo"
+    output_logdir: str = "results/cnn/local"
+    output_checkpoint_dir: str = "results/cnn/local/checkpoints"
     save_step: int = 100  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
-    load_checkpoint: str =  "checkpoint/18839/model_8299"
+    load_checkpoint: str =  "results/cnn/18839/checkpoints/model_8299"
 
 
 CONFIG = Config()
@@ -323,12 +323,33 @@ if __name__ == "__main__":
         default=CONFIG.load_checkpoint,
         help="Load checkpoint",
     )
+    parser.add_argument(
+        "--num_episodes",
+        type=int,
+        default=CONFIG.max_num_episodes,
+        help="Number of episodes",
+    )
+    parser.add_argument(
+        "--max_steps_per_episode",
+        type=int,
+        default=CONFIG.max_steps_per_episode,
+        help="Maximum number of steps per episode",
+    )
+    parser.add_argument(
+        "--save_step_per_episode",
+        type=int,
+        default=CONFIG.save_step,
+        help="Save model every n episodes",
+    )
     args = parser.parse_args()
 
     CONFIG = Config(
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
         load_checkpoint=args.load_checkpoint,
+        max_num_episodes=args.num_episodes,
+        max_steps_per_episode=args.max_steps_per_episode,
+        save_step=args.save_step_per_episode,
     )
     logging.basicConfig(level=CONFIG.logging_level)
     os.makedirs(CONFIG.output_logdir, exist_ok=True)
