@@ -466,14 +466,41 @@ class SnakeAgent:
     def decay_epsilon(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
     
-    def load_model(self, checkpoint):
+    def load_model(self, checkpoint_path, optimizer):
+        logging.info("Loading model from checkpoint: {}".format(checkpoint_path))
         try:
-            os.path.isfile(checkpoint)
-            self.model.load_state_dict(torch.load(checkpoint))
-            self.model_target.load_state_dict(torch.load(checkpoint))
-            logging.info("Model loaded")
+            try:
+                os.path.isfile(checkpoint_path)
+                checkpoint = torch.load(checkpoint_path)
+                self.model.load_state_dict(checkpoint["model_state_dict"])
+                self.model_target.load_state_dict(checkpoint["model_state_dict"])
+                logging.info("Model loaded")
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                logging.info("Optimizer loaded")
+            except:
+                logging.warning("Optimizer not found, loading default optimizer")
+                os.path.isfile(checkpoint_path)
+                checkpoint = torch.load(checkpoint_path)
+                self.model.load_state_dict(checkpoint)
+                self.model_target.load_state_dict(checkpoint)
+                logging.info("Model loaded")
+
         except:
             logging.warning("Checkpoint not found, loading default model")
-            return
+        return optimizer
         
+    def save_model(self, checkpoint_path, optimizer):
+        """
+        Save the model and optimizer parameters to disk.
+
+        Args:
+            checkpoint_path (str): The path to save the checkpoint file.
+            optimizer (torch.optim.Optimizer): The optimizer used to train the model.
+        """
+        checkpoint = {
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+        }
+        torch.save(checkpoint, checkpoint_path)
+        logging.info("Model saved")
         
