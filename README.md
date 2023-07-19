@@ -5,6 +5,8 @@
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
 
 ![](game/captures/mlp_70000.gif)
+![](game/captures/cnn_40000.gif)
+
 ## Purpose of the project
 
 The aim of the project was to implement Deep QNetworks, following the description contained in [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602) and in particular to exploit it to make an agent learn how to play Snake game.
@@ -74,8 +76,12 @@ A folder `GIF` is also created, where the GIFs of the first and last 500 step of
 
 ### Results
 
+
 See how the model behaves:
 
-- after ~ 70000 episodes
+- MLP after ~ 70000 episodes
 
+
+- CNN after ~ 40000 episodes
+- 
   
