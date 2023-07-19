@@ -3,6 +3,8 @@
 ![License MIT](https://img.shields.io/github/license/erikalena/Deep-QNetworks?style=for-the-badge) 
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
+
+![](game/captures/mlp_70000.gif)
 ## Purpose of the project
 
 The aim of the project was to implement Deep QNetworks, following the description contained in [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602) and in particular to exploit it to make an agent learn how to play Snake game.
@@ -77,4 +79,3 @@ See how the model behaves:
 - after ~ 70000 episodes
 
   
-![](game/captures/mlp_70000.gif)
