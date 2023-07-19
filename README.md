@@ -71,12 +71,3 @@ In the results folder, a `log.json` file is created with all the configuration o
 A folder `GIF` is also created, where the GIFs of the first and last 500 step of an episode are saved.
 
 ### GYM 
-
-
-# TODO:
-- [ ] ? Remove wall transparency
-- [ ]  Add point/level system to vectorized version
-- [ ]  check input cnn and epsilon decay
-- [x] ? Vectorize the game (for speed)
-- [x] Add DDQN 
-- [ ] Add a `requirements.txt` file
