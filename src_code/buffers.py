@@ -7,9 +7,7 @@ import sys
 from src_code.qlearning import *
 from torch.utils.data import DataLoader
 from collections import deque
-
-
-
+        
 class SeqReplayBuffer(object):
     """
     Replay buffer to store past experiences that the 
@@ -20,51 +18,12 @@ class SeqReplayBuffer(object):
         self.buffer = deque(maxlen=size)
         self.device = device
 
-    def add(self, state, body, action, reward, next_state, next_body, done):
-        self.buffer.append((state, body, action, reward, next_state, next_body, done))
+    def add(self, state, action, reward, next_state, done, info, new_info):
+        state = list(np.concatenate([state["agent"],state["target"]]))
+        next_state = list(np.concatenate([next_state["agent"],next_state["target"]]))
+        body = info["body"]
+        new_body = new_info["body"]
 
-    def __len__(self):
-        return len(self.buffer)
-
-    def sample(self, num_samples):
-        states, bodies, actions, rewards, next_states, next_bodies, dones = [], [], [], [], [], [], []
-        idx = np.random.choice(len(self.buffer), num_samples)
-       
-        idx[0] = np.random.randint(0, len(self.buffer)-(num_samples+1))
-        idx[1:] = np.arange(idx[0]+1, idx[0]+num_samples)
-
-        for i in idx:
-            elem = self.buffer[i]
-            state, body, action, reward, next_state, next_body, done = elem
-            states.append(state)
-            bodies.append(body)
-            actions.append(action)
-            rewards.append(reward)
-            next_states.append(next_state)
-            next_bodies.append(next_body)
-            dones.append(done)
-
-        actions = np.array(actions)
-        rewards = np.array(rewards)
-        dones = np.array(dones)
-        return states, bodies, actions, rewards, next_states, next_bodies, dones
-            
-
-
-
-        
-
-class VecReplayBuffer(object): #TODO make it as a subclass of ReplayBuffer
-    """
-    Replay buffer to store past experiences that the 
-    agent can then use for training the neural network.
-    """
-
-    def __init__(self, size, device:str = 'cpu'):
-        self.buffer = deque(maxlen=size)
-        self.device = device
-
-    def add(self, state, action, reward, next_state, done, body, new_body):
         self.buffer.append((state, action, reward, next_state, done, body, new_body))
     
     def add_multiple(self, states, actions, rewards, next_states, dones, bodies, new_bodies):
@@ -99,3 +58,4 @@ class VecReplayBuffer(object): #TODO make it as a subclass of ReplayBuffer
         dones = torch.as_tensor(np.array(dones, dtype=np.float32), device=self.device)
         #bodies = torch.as_tensor(np.asarray(bodies,dtype=np.float32) , device=self.device)
         return states, actions, rewards, next_states, dones, bodies, new_bodies
+

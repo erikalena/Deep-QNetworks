@@ -1,0 +1,1155 @@
+{
+    "configuration": {
+        "current_time": "20230715-185854",
+        "description": "Deep Q-Network Snake with gym and class agent, done after snake eats itself",
+        "device": "cuda",
+        "batch_size": 32,
+        "env_size_x": 20,
+        "env_size_y": 20,
+        "num_envs": 1,
+        "max_steps_per_episode": 1000000,
+        "max_num_episodes": 10000,
+        "deque_size": 100,
+        "epsilon_max": 1.0,
+        "epsilon_min": 0.1,
+        "eps_learning_rate": 0.01,
+        "update_after_actions": 4,
+        "update_target_network": 10000,
+        "epsilon_random_frames": 50000,
+        "epsilon_greedy_frames": 100000.0,
+        "buffer_size": 100000,
+        "output_filename": "log.json",
+        "output_logdir": "./results/18188",
+        "output_checkpoint_dir": "./checkpoint/18188",
+        "save_step": 50,
+        "logging_level": 10
+    },
+    "episode_49": {
+        "training_error": "1.7189674551730196",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9900000000000011"
+    },
+    "episode_99": {
+        "training_error": "1.7142910878598534",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9800000000000022"
+    },
+    "episode_149": {
+        "training_error": "1.704296954115127",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9700000000000033"
+    },
+    "episode_199": {
+        "training_error": "1.7296686461614774",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9600000000000044"
+    },
+    "episode_249": {
+        "training_error": "1.7683849367509938",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.9500000000000055"
+    },
+    "episode_299": {
+        "training_error": "1.7802437747496342",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.9400000000000066"
+    },
+    "episode_349": {
+        "training_error": "1.7780100801643772",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9300000000000077"
+    },
+    "episode_399": {
+        "training_error": "1.7759491561325667",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.9200000000000088"
+    },
+    "episode_449": {
+        "training_error": "1.7631486915692267",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.9100000000000099"
+    },
+    "episode_499": {
+        "training_error": "1.7575366463338529",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.900000000000011"
+    },
+    "episode_549": {
+        "training_error": "1.7674341139401841",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.8900000000000121"
+    },
+    "episode_599": {
+        "training_error": "1.7657292609128599",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.8800000000000132"
+    },
+    "episode_649": {
+        "training_error": "1.7644279162353684",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.8700000000000143"
+    },
+    "episode_699": {
+        "training_error": "1.7742869874317717",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.8600000000000154"
+    },
+    "episode_749": {
+        "training_error": "1.7721070216250994",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.8500000000000165"
+    },
+    "episode_799": {
+        "training_error": "1.7706062589695288",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.8400000000000176"
+    },
+    "episode_849": {
+        "training_error": "1.7717340018948637",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.8300000000000187"
+    },
+    "episode_899": {
+        "training_error": "1.7719191002781447",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.8200000000000198"
+    },
+    "episode_949": {
+        "training_error": "1.7719944676011856",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.8100000000000209"
+    },
+    "episode_999": {
+        "training_error": "1.7779102843312116",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.800000000000022"
+    },
+    "episode_1049": {
+        "training_error": "1.7838972478102753",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7900000000000231"
+    },
+    "episode_1099": {
+        "training_error": "1.7877771006307874",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7800000000000242"
+    },
+    "episode_1149": {
+        "training_error": "1.7888458845855282",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.7700000000000253"
+    },
+    "episode_1199": {
+        "training_error": "1.7962016039225228",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7600000000000264"
+    },
+    "episode_1249": {
+        "training_error": "1.8059898453959875",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.7500000000000275"
+    },
+    "episode_1299": {
+        "training_error": "1.8153495304756613",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7400000000000286"
+    },
+    "episode_1349": {
+        "training_error": "1.8233573705221826",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7300000000000297"
+    },
+    "episode_1399": {
+        "training_error": "1.8334132416982605",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7200000000000308"
+    },
+    "episode_1449": {
+        "training_error": "1.8406858601551856",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.7100000000000319"
+    },
+    "episode_1499": {
+        "training_error": "1.8481783322635108",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.700000000000033"
+    },
+    "episode_1549": {
+        "training_error": "1.8556483137797113",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6900000000000341"
+    },
+    "episode_1599": {
+        "training_error": "1.8669520874325523",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.6800000000000352"
+    },
+    "episode_1649": {
+        "training_error": "1.8767154654285938",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6700000000000363"
+    },
+    "episode_1699": {
+        "training_error": "1.886336912127452",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6600000000000374"
+    },
+    "episode_1749": {
+        "training_error": "1.895438209393163",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6500000000000385"
+    },
+    "episode_1799": {
+        "training_error": "1.9009542059525033",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6400000000000396"
+    },
+    "episode_1849": {
+        "training_error": "1.9055111692511033",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.6300000000000407"
+    },
+    "episode_1899": {
+        "training_error": "1.9076168553444073",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.6200000000000419"
+    },
+    "episode_1949": {
+        "training_error": "1.909260857243616",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.610000000000043"
+    },
+    "episode_1999": {
+        "training_error": "1.9110862488760674",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.600000000000044"
+    },
+    "episode_2049": {
+        "training_error": "1.9143228620655317",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5900000000000452"
+    },
+    "episode_2099": {
+        "training_error": "1.9181170273379191",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5800000000000463"
+    },
+    "episode_2149": {
+        "training_error": "1.9232789016374052",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.5700000000000474"
+    },
+    "episode_2199": {
+        "training_error": "1.9285294903446444",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.5600000000000485"
+    },
+    "episode_2249": {
+        "training_error": "1.9331166496966048",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5500000000000496"
+    },
+    "episode_2299": {
+        "training_error": "1.940311223061349",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5400000000000507"
+    },
+    "episode_2349": {
+        "training_error": "1.942631635373338",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5300000000000518"
+    },
+    "episode_2399": {
+        "training_error": "1.9491262947460648",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5200000000000529"
+    },
+    "episode_2449": {
+        "training_error": "1.9564366614536917",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.510000000000054"
+    },
+    "episode_2499": {
+        "training_error": "1.9651044950510905",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.5000000000000551"
+    },
+    "episode_2549": {
+        "training_error": "1.9689800866055196",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.49000000000005617"
+    },
+    "episode_2599": {
+        "training_error": "1.9700047629760715",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.48000000000005727"
+    },
+    "episode_2649": {
+        "training_error": "1.9699687739860603",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.47000000000005837"
+    },
+    "episode_2699": {
+        "training_error": "1.971506961650776",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.4600000000000595"
+    },
+    "episode_2749": {
+        "training_error": "1.974332214404615",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.4500000000000606"
+    },
+    "episode_2799": {
+        "training_error": "1.9762024487590297",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.4400000000000617"
+    },
+    "episode_2849": {
+        "training_error": "1.9789066601226528",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.4300000000000628"
+    },
+    "episode_2899": {
+        "training_error": "1.978629694393282",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.4200000000000639"
+    },
+    "episode_2949": {
+        "training_error": "1.979659998374275",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.410000000000065"
+    },
+    "episode_2999": {
+        "training_error": "1.9789657933289684",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.4000000000000661"
+    },
+    "episode_3049": {
+        "training_error": "1.9779212891643096",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.3900000000000672"
+    },
+    "episode_3099": {
+        "training_error": "1.976349191228403",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.3800000000000683"
+    },
+    "episode_3149": {
+        "training_error": "1.9750749120081783",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.3700000000000694"
+    },
+    "episode_3199": {
+        "training_error": "1.9763494317957857",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.3600000000000705"
+    },
+    "episode_3249": {
+        "training_error": "1.9784468593803453",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.3500000000000716"
+    },
+    "episode_3299": {
+        "training_error": "1.9823409352694779",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.3400000000000727"
+    },
+    "episode_3349": {
+        "training_error": "1.9828888853681843",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.3300000000000738"
+    },
+    "episode_3399": {
+        "training_error": "1.98402705406086",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.3200000000000749"
+    },
+    "episode_3449": {
+        "training_error": "1.983474593611233",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.310000000000076"
+    },
+    "episode_3499": {
+        "training_error": "1.9811110035316302",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.3000000000000771"
+    },
+    "episode_3549": {
+        "training_error": "1.9792008511521686",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.2900000000000782"
+    },
+    "episode_3599": {
+        "training_error": "1.978400146924468",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.2800000000000793"
+    },
+    "episode_3649": {
+        "training_error": "1.976034133957259",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.2700000000000804"
+    },
+    "episode_3699": {
+        "training_error": "1.974259167318806",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.2600000000000815"
+    },
+    "episode_3749": {
+        "training_error": "1.9727771642462235",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.2500000000000826"
+    },
+    "episode_3799": {
+        "training_error": "1.9714359633245777",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.24000000000008231"
+    },
+    "episode_3849": {
+        "training_error": "1.9698130231251665",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.23000000000008203"
+    },
+    "episode_3899": {
+        "training_error": "1.9687604608613987",
+        "mean_eaten": 1.06,
+        "eatens": 3,
+        "epsilon": "0.22000000000008174"
+    },
+    "episode_3949": {
+        "training_error": "1.9692280758559455",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.21000000000008145"
+    },
+    "episode_3999": {
+        "training_error": "1.9670124996566964",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.20000000000008117"
+    },
+    "episode_4049": {
+        "training_error": "1.962044199780189",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.19000000000008088"
+    },
+    "episode_4099": {
+        "training_error": "1.9562406675116122",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1800000000000806"
+    },
+    "episode_4149": {
+        "training_error": "1.9495441625877257",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1700000000000803"
+    },
+    "episode_4199": {
+        "training_error": "1.940146024265485",
+        "mean_eaten": 1.06,
+        "eatens": 2,
+        "epsilon": "0.16000000000008002"
+    },
+    "episode_4249": {
+        "training_error": "1.9309080572927946",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.15000000000007974"
+    },
+    "episode_4299": {
+        "training_error": "1.9204732530502227",
+        "mean_eaten": 1.06,
+        "eatens": 2,
+        "epsilon": "0.14000000000007945"
+    },
+    "episode_4349": {
+        "training_error": "1.910151502968487",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.13000000000007916"
+    },
+    "episode_4399": {
+        "training_error": "1.896688324727412",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.12000000000007888"
+    },
+    "episode_4449": {
+        "training_error": "1.8851324236106164",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.11000000000007859"
+    },
+    "episode_4499": {
+        "training_error": "1.8697750671792552",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1000000000000783"
+    },
+    "episode_4549": {
+        "training_error": "1.8475796793371289",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4599": {
+        "training_error": "1.8314932172250187",
+        "mean_eaten": 1.12,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4649": {
+        "training_error": "1.8206755146346942",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4699": {
+        "training_error": "1.812547942690398",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4749": {
+        "training_error": "1.8010433393904608",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4799": {
+        "training_error": "1.7897909674198085",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4849": {
+        "training_error": "1.77583385386613",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4899": {
+        "training_error": "1.7669435204210238",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4949": {
+        "training_error": "1.760734506962112",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_4999": {
+        "training_error": "1.7524927688618708",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5049": {
+        "training_error": "1.7444323396800339",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5099": {
+        "training_error": "1.7307694346918006",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5149": {
+        "training_error": "1.7199242348039636",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5199": {
+        "training_error": "1.7104273506685121",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5249": {
+        "training_error": "1.701848518698599",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5299": {
+        "training_error": "1.6927177122717336",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5349": {
+        "training_error": "1.6851700720808238",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5399": {
+        "training_error": "1.6743870152334426",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5449": {
+        "training_error": "1.665737646367564",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5499": {
+        "training_error": "1.6576360254846265",
+        "mean_eaten": 1.14,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5549": {
+        "training_error": "1.6516363022308282",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5599": {
+        "training_error": "1.6439648082287843",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5649": {
+        "training_error": "1.634694139362689",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5699": {
+        "training_error": "1.627750287085397",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5749": {
+        "training_error": "1.6237909115856113",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5799": {
+        "training_error": "1.6196274279079386",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5849": {
+        "training_error": "1.6140108672554319",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5899": {
+        "training_error": "1.6080996040259068",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5949": {
+        "training_error": "1.6032914156217528",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_5999": {
+        "training_error": "1.59879608213911",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6049": {
+        "training_error": "1.5923467960496247",
+        "mean_eaten": 1.06,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_6099": {
+        "training_error": "1.587859246793603",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6149": {
+        "training_error": "1.5822924608587925",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6199": {
+        "training_error": "1.5774966121375125",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6249": {
+        "training_error": "1.572754097028455",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6299": {
+        "training_error": "1.570207323105954",
+        "mean_eaten": 1.08,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_6349": {
+        "training_error": "1.5654100288561288",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6399": {
+        "training_error": "1.5602405787338407",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6449": {
+        "training_error": "1.5561762130835792",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6499": {
+        "training_error": "1.5513140190004644",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6549": {
+        "training_error": "1.5450719591413107",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6599": {
+        "training_error": "1.5401656107725934",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6649": {
+        "training_error": "1.5367376318185484",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6699": {
+        "training_error": "1.533066760691863",
+        "mean_eaten": 1.14,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6749": {
+        "training_error": "1.528240547368702",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6799": {
+        "training_error": "1.523846015256127",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6849": {
+        "training_error": "1.5200438336204525",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6899": {
+        "training_error": "1.5176878409682146",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6949": {
+        "training_error": "1.5133933119970582",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_6999": {
+        "training_error": "1.5099992148309123",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7049": {
+        "training_error": "1.5068482335920539",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7099": {
+        "training_error": "1.5036860245191166",
+        "mean_eaten": 1.2,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7149": {
+        "training_error": "1.5004440361885978",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7199": {
+        "training_error": "1.4981634462116684",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7249": {
+        "training_error": "1.4970078885299851",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7299": {
+        "training_error": "1.4960690250391018",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7349": {
+        "training_error": "1.4947994664083937",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7399": {
+        "training_error": "1.4929286593665605",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7449": {
+        "training_error": "1.4905301769221084",
+        "mean_eaten": 1.1,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_7499": {
+        "training_error": "1.487888199069487",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7549": {
+        "training_error": "1.4851994434955424",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7599": {
+        "training_error": "1.484510583288263",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7649": {
+        "training_error": "1.4827362586233053",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7699": {
+        "training_error": "1.4803967674026548",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7749": {
+        "training_error": "1.4774822635740814",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7799": {
+        "training_error": "1.4747868092892011",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7849": {
+        "training_error": "1.473527860517529",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7899": {
+        "training_error": "1.471525679551746",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7949": {
+        "training_error": "1.4688773685880945",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_7999": {
+        "training_error": "1.46868584148368",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8049": {
+        "training_error": "1.4687430478371137",
+        "mean_eaten": 1.2,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8099": {
+        "training_error": "1.4658273946041844",
+        "mean_eaten": 1.1,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_8149": {
+        "training_error": "1.4631651845370852",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8199": {
+        "training_error": "1.4611495585299685",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8249": {
+        "training_error": "1.4601145361532522",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8299": {
+        "training_error": "1.4590775218203282",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8349": {
+        "training_error": "1.454668559729945",
+        "mean_eaten": 1.12,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8399": {
+        "training_error": "1.4505687308131405",
+        "mean_eaten": 1.12,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8449": {
+        "training_error": "1.4473603205183336",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8499": {
+        "training_error": "1.4449965361980552",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8549": {
+        "training_error": "1.4428733617091936",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8599": {
+        "training_error": "1.441120226774987",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8649": {
+        "training_error": "1.4399328808690066",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8699": {
+        "training_error": "1.4381461093540082",
+        "mean_eaten": 1.1,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8749": {
+        "training_error": "1.4370076681399286",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8799": {
+        "training_error": "1.4354808073961771",
+        "mean_eaten": 1.02,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8849": {
+        "training_error": "1.4336592062932196",
+        "mean_eaten": 1.14,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8899": {
+        "training_error": "1.4322816983700368",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8949": {
+        "training_error": "1.4311813759463246",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_8999": {
+        "training_error": "1.429186417461041",
+        "mean_eaten": 1.0,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9049": {
+        "training_error": "1.4285502288151237",
+        "mean_eaten": 1.06,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9099": {
+        "training_error": "1.427041565704485",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9149": {
+        "training_error": "1.4250842544947562",
+        "mean_eaten": 1.04,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_9199": {
+        "training_error": "1.4230953063142624",
+        "mean_eaten": 1.12,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9249": {
+        "training_error": "1.4212168297839576",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9299": {
+        "training_error": "1.4188241109860096",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9349": {
+        "training_error": "1.4168822310741265",
+        "mean_eaten": 1.04,
+        "eatens": 1,
+        "epsilon": "0.1"
+    },
+    "episode_9399": {
+        "training_error": "1.41508745402351",
+        "mean_eaten": 1.08,
+        "eatens": 1,
+        "epsilon": "0.1"
+    }
+}

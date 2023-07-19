@@ -1,0 +1,56 @@
+{
+    "configuration": {
+        "current_time": "20230717-215759",
+        "description": "Deep Q-Network Snake with gym and class agent, done after snake eats itself",
+        "device": "cuda",
+        "batch_size": 32,
+        "env_size_x": 20,
+        "env_size_y": 20,
+        "num_envs": 1,
+        "max_steps_per_episode": 10000,
+        "max_num_episodes": 20000,
+        "deque_size": 100,
+        "epsilon_max": 1.0,
+        "epsilon_min": 0.1,
+        "learning_rate": 0.01,
+        "done_on_collision": false,
+        "update_after_actions": 4,
+        "update_target_network": 10000,
+        "epsilon_random_frames": 50000,
+        "epsilon_greedy_frames": 100000.0,
+        "buffer_size": 100000,
+        "eps_decay_per_episode": 0.01,
+        "output_filename": "log.json",
+        "output_logdir": "./results/18409",
+        "output_checkpoint_dir": "./checkpoint/18409",
+        "save_step": 100,
+        "logging_level": 10,
+        "load_checkpoint": "checkpoint/18340/model_99",
+        "reward": {
+            "eat": 10,
+            "collision": -1,
+            "step": 0
+        }
+    },
+    "episode_99": {
+        "training_error": "43885.26352042981",
+        "mean_eaten": 7.54,
+        "mean_reward": -0.4381123775244951,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_199": {
+        "training_error": "82888.49206077658",
+        "mean_eaten": 3.1,
+        "mean_reward": -0.11047790441911617,
+        "eatens": 2,
+        "epsilon": "0.1"
+    },
+    "episode_299": {
+        "training_error": "191876.38364840628",
+        "mean_eaten": 2.62,
+        "mean_reward": -0.6641671665666866,
+        "eatens": 3,
+        "epsilon": "0.1"
+    }
+}
