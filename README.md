@@ -77,4 +77,6 @@ A folder `GIF` is also created, where the GIFs of the first and last 500 step of
 See how the model behaves:
 
 - after ~ 70000 episodes
+
+  
 ![](game/captures/mlp_70000.gif)
