@@ -1,389 +1,173 @@
-from src_code.buffers import VecReplayBuffer, SeqReplayBuffer
-from src_code.deep_qnetworks import (
-    DQN,
-    SnakeEnv,
-    GymSnakeEnv,
-    get_image,
-    select_epsilon_greedy_action,
-)
-from src_code.utils import add_parser_argument, VecStatistics, SeqStatistics
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import numpy as np
+import copy
 
+from src_code.cnn.buffers import SeqReplayBuffer
+from src_code.cnn.agent import DQN, SnakeAgent
+from src_code.cnn.environment import SnakeEnv
+from src_code.cnn.train import train_step
+
+from tqdm import tqdm
 import gymnasium as gym
 from gymnasium import spaces
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-import os
+import pickle
+import logging
+from dataclasses import dataclass, field
 import argparse
 import json
+import os
+import io
 import datetime
-
-
-from tqdm import tqdm
 import logging
-from dataclasses import dataclass
+
+from PIL import Image
+from typing import Dict, List, Tuple, Union
 
 
 @dataclass
 class Config:
     current_time: str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    description: str = (
+        "Deep Q-Network Snake with gym and class agent, done after snake eats itself"
+    )
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     batch_size: int = 32  # Size of batch taken from replay buffer
-    env_size_x: int = 20
-    env_size_y: int = 20
-    num_envs: int = 2
-    max_steps_per_episode: int = 3000000
-    max_num_episodes: int = 5
-    epsilon: float = 1.0
-    epsilon_min: float = 0.1  # Minimum epsilon greedy parameter
+    env_size_x: int = 10
+    env_size_y: int = 10
+    num_envs: int = 1
+    max_steps_per_episode: int = 30000
+    max_num_episodes: int = 20000
+    deque_size: int = 100
+
+    # epsilon
     epsilon_max: float = 1.0  # Maximum epsilon greedy parameter
+    epsilon_min: float = 0.2  # Minimum epsilon greedy parameter
+
+    no_back = False
+    done_on_collision: bool = False
     update_after_actions: int = 4  # Train the model after 4 actions
     update_target_network: int = 10000  # How often to update the target network
-    epsilon_random_frames: int = (
-        50000  # Number of frames to take random action and observe output
+    epsilon_random_frames: int = 100000  # Number of frames for exploration
+    eps_decay_frames: int = 10000
+    buffer_size: int = 100000  # Size of the replay buffer
+    eps_decay_rate: float = 0.001
+    reward: Dict[str, int] = field(
+        default_factory=lambda: {"eat": 40, "dead": -1, "step": 0}
     )
-    epsilon_greedy_frames: float = 100000.0  # Number of frames for exploration
+
     output_filename: str = "log.json"
-    output_logdir: str = "results/prova"
-    output_checkpoint_dir: str = "checkpoints/prova"
-    save_step: int = 1  # Save model every 100 episodes and log results
+    output_logdir: str = "results/orfeo"
+    output_checkpoint_dir: str = "checkpoint/orfeo"
+    save_step: int = 100  # Save model every 100 episodes and log results
     logging_level: int = logging.DEBUG
-    description: str = "Deep Q-Network Snake, done after snake eats itself"
-    load_from_checkpoint: str = None
+    load_checkpoint: str =  "checkpoint/18839/model_8299"
 
 
 CONFIG = Config()
 
 
-##################################
-# Training
-##################################
-def compute_targets_and_loss(
-    model,
-    model_target,
-    loss_function,
-    states,
-    actions,
-    rewards,
-    next_states,
-    dones,
-    discount,
-    bodies,
-    new_bodies,
-    env=None,
-):
-    # compute targets for Q-learning
-    # the max Q-value of the next state is the target for the current state
-    # the image to be fed to the network is a grey scale image of the world
-    if env is not None:  # sequential (SnakeEnv, SeqBuffer)
-        images = [
-            env.get_image(next_state, new_body)
-            for next_state, new_body in zip(next_states, new_bodies)
-        ]
-    else:  # using gym (GymSnakeEnv, VecBuffer)
-        images = [
-            get_image(next_state, new_body, CONFIG)
-            for next_state, new_body in zip(next_states, new_bodies)  # type: ignore
-        ]
+def create_gif_from_plt_images(image_list, output_path, duration=200):
+    temp_image_folder = "temp_images"
+    os.makedirs(temp_image_folder, exist_ok=True)
 
-    input = (
-        torch.as_tensor(np.array(images), dtype=torch.float32)
-        .unsqueeze(1)
-        .to(CONFIG.device)
+    images = []
+    for i, img_data in enumerate(image_list):
+        img_path = os.path.join(temp_image_folder, f"temp_{i}.png")
+        plt.imshow(img_data)
+        plt.axis("off")
+        with open(img_path, "wb") as file:
+            plt.savefig(file, bbox_inches="tight", pad_inches=0)
+        plt.clf()
+        images.append(img_path)
+
+    gif_images = [Image.open(img) for img in images]
+
+    gif_images[0].save(
+        output_path,
+        save_all=True,
+        append_images=gif_images[1:],
+        duration=duration,
+        loop=0,
     )
 
-    max_next_qs = model_target(input).max(-1).values
-
-    # transform into tensors and move to device
-    rewards = torch.as_tensor(rewards, dtype=torch.float32).to(CONFIG.device)
-    dones = torch.as_tensor(dones, dtype=torch.float32).to(CONFIG.device)
-
-    # if the next state is terminal, then the Q-value is just the reward
-    # otherwise, we add the discounted max Q-value of the next state
-    target = rewards + (1.0 - dones) * discount * max_next_qs
-
-    # then to compute the loss, we also need the Q-value of the current state
-    if env is not None:  # sequential (SnakeEnv, SeqBuffer)
-        images = [env.get_image(state, body) for state, body in zip(states, bodies)]
-    else:  # using gym (GymSnakeEnv, VecBuffer)
-        images = [get_image(state, body, CONFIG) for state, body in zip(states, bodies)]  # type: ignore
-
-    input = (
-        torch.as_tensor(np.array(images), dtype=torch.float32)
-        .unsqueeze(1)
-        .to(CONFIG.device)
-    )
-
-    qs = model(input)
-    actions = torch.as_tensor(actions, dtype=torch.float32).to(CONFIG.device)
-    # for each state, we update ONLY the Q-value of the action that was taken
-    action_masks = F.one_hot(actions.long(), num_actions)
-    masked_qs = (action_masks * qs).sum(dim=-1)
-    loss = loss_function(masked_qs, target.detach())
-
-    return target, loss
+    # Clean up temporary images
+    for img_path in images:
+        os.remove(img_path)
 
 
-def vec_train_step(
-    states,
-    actions,
-    rewards,
-    next_states,
-    dones,
-    bodies=None,
-    new_bodies=None,
-    discount=0.99,
-):
-    """
-    Perform a training iteration on a batch of data sampled from the experience
-    replay buffer.
-
-    Takes as input:
-        - states: a batch of states
-        - actions: a batch of actions
-        - rewards: a batch of rewards
-        - next_states: a batch of next states
-        - dones: a batch of dones
-        - discount: the discount factor, standard discount factor in RL to evaluate less long term rewards
-    """
-
-    target, loss = compute_targets_and_loss(
-        model,
-        model_target,
-        loss_function,
-        states,
-        actions,
-        rewards,
-        next_states,
-        dones,
-        discount,
-        bodies=bodies,
-        new_bodies=new_bodies,
-    )
-
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    return loss
-
-
-def seq_train_step(
-    env,
-    states,
-    bodies,
-    actions,
-    rewards,
-    next_states,
-    next_bodies,
-    dones,
-    discount=0.99,
-):
-    """
-    Perform a training iteration on a batch of data sampled from the experience
-    replay buffer.
-
-    Takes as input:
-        - states: a batch of states
-        - actions: a batch of actions
-        - rewards: a batch of rewards
-        - next_states: a batch of next states
-        - dones: a batch of dones
-        - discount: the discount factor, standard discount factor in RL to evaluate less long term rewards
-    """
-
-    target, loss = compute_targets_and_loss(
-        model,
-        model_target,
-        loss_function,
-        states,
-        actions,
-        rewards,
-        next_states,
-        dones,
-        discount,
-        bodies,
-        next_bodies,
-        env=env,
-    )
-
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    return loss
-
-
-def sequential_learning(env, buffer, filename):
-    cur_frame = 0
-    statistics = SeqStatistics()
-    pbar = tqdm(range(CONFIG.max_num_episodes), desc="Run episodes")
-    epsilon = CONFIG.epsilon
-
-    for episode in range(CONFIG.max_num_episodes):
-        env.reset()
-        episode_reward = 0
-
-        # state is a tuple of 4 values made of starting position and goal position
-        # start of an episode is always [0,0] for snake and a random position for goal
-        start_x = env.start[0]
-        start_y = env.start[1]
-        goal_x = np.random.randint(0, env.Lx)
-        goal_y = np.random.randint(0, env.Ly)
-
-        body = []
-        state = [start_x, start_y, goal_x, goal_y]
-
-        # done = False
-        timestep = 0
-        accumulated_loss = 0
-        while timestep < CONFIG.max_steps_per_episode:
-            cur_frame += 1
-
-            # state_in = torch.from_numpy(np.expand_dims(state, axis=0)).to(CONFIG.device)
-            action = env.select_epsilon_greedy_action(model, state, body, epsilon)
-
-            next_state, next_body, reward, done = env.single_step(state, body, action)
-            episode_reward += reward
-
-            # Save actions and states in replay buffer
-            buffer.add(state, body, action, reward, next_state, next_body, done)  # type: ignore
-            state = next_state
-            cur_frame += 1
-
-            # Train neural network.
-            if (
-                len(buffer) > CONFIG.batch_size
-                and cur_frame % CONFIG.update_after_actions == 0
-            ):
-                states, bodies, actions, rewards, next_states, next_bodies, dones = buffer.sample(  # type: ignore
-                    CONFIG.batch_size
-                )
-                loss = seq_train_step(
-                    env,
-                    states,
-                    bodies,
-                    actions,
-                    rewards,
-                    next_states,
-                    next_bodies,
-                    dones,
-                    discount=0.99,
-                )
-                accumulated_loss += loss.item()
-            # Update target network every update_target_network steps.
-            if cur_frame % CONFIG.update_target_network == 0:
-                model_target.load_state_dict(model.state_dict())
-
-            timestep += 1
-
-            if cur_frame > CONFIG.epsilon_random_frames:
-                epsilon -= (
-                    CONFIG.epsilon_max - CONFIG.epsilon_min
-                ) / CONFIG.epsilon_greedy_frames
-                epsilon = max(epsilon, CONFIG.epsilon_min)
-
-            if done:
-                break
-
-        if statistics.len == CONFIG.save_step:
-            statistics.shift()
-        statistics.append(
-            loss=accumulated_loss / timestep,
-            points=env.get_points(),
-            steps=timestep,
-            steps_per_point=env.n_steps_per_point,
-            episode_reward=episode_reward,
-        )
-
-        """ if episode % 100 == 0:
-            epsilon -= 0.025
-            epsilon = max(epsilon, CONFIG.epsilon_min) """
-
-        if episode % CONFIG.save_step == 1:
-            """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
-            f' Reward in last 100 episodes: {running_reward:.2f}')"""
-            logging.info(f"\n Saving results at episode {episode}")
-            file = json.load(open(filename))
-            file["episode_{}".format(episode)] = {
-                "epsilon": epsilon,
-                "points": env.get_points(),
-                "steps": timestep,
-                "steps_per_point": env.n_steps_per_point,
-                "reward_mean": np.mean(statistics.episode_rewards),
-                "loss_mean": np.mean(statistics.losses),
-                "points_mean": np.mean(statistics.points),
-                "steps_mean": np.mean(statistics.steps),
-                "estimated_time": pbar.format_dict["elapsed"],
-            }
-            json.dump(file, open(filename, "w"), indent=4)
-            # Save model
-            torch.save(
-                model.state_dict(),
-                f"{CONFIG.output_checkpoint_dir}/model_{episode}.pth",
-            )
-
-        # Condition to consider the task solved
-        # e.g. to eat at least 6 consecutive food items
-        # without eating itself, considering also the moves to reach the food
-        if np.mean(statistics.episode_rewards) > 500:
-            logging.info("Solved at episode {}!".format(episode))
-            break
-        pbar.update(1)
-
-
-def vectorized_learning(env, buffer, filename):
-    cur_frame = 0
-    statistics = VecStatistics()
-
+def dqn_learning(CONFIG):
+    # Save configuration
+    filename: str = CONFIG.output_logdir + "/" + CONFIG.output_filename
+    print(CONFIG)
     with open(filename, "w") as f:
         dict_json = {"configuration": CONFIG.__dict__}
         json.dump(dict_json, f, indent=4)
 
-    epsilon = CONFIG.epsilon
+    env = SnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y), config=CONFIG)
 
-    # env.start = np.array([0,0])
-    # pbar = tqdm(range(CONFIG.max_num_episodes))
+    epsilon_decay = (CONFIG.epsilon_max / (CONFIG.max_num_episodes * 0.5)) * 100
+
+    snake_agent = SnakeAgent(
+        initial_epsilon=CONFIG.epsilon_max,
+        final_epsilon=CONFIG.epsilon_min,
+        epsilon_decay=CONFIG.eps_decay_rate,
+        num_actions=env.action_space.n,  # type: ignore
+        env=env,
+        size=(CONFIG.env_size_x, CONFIG.env_size_y),
+        device=CONFIG.device,
+    )
+
+    buffer = SeqReplayBuffer(size=CONFIG.buffer_size, device=CONFIG.device)
+
+    optimizer = torch.optim.Adam(snake_agent.model.parameters(), lr=0.00025)
+    if CONFIG.load_checkpoint is not None:
+        optimizer = snake_agent.load_model(CONFIG.load_checkpoint, optimizer=optimizer)
+    # huber loss
+    loss_function = nn.HuberLoss()
+    env = gym.wrappers.RecordEpisodeStatistics(env, deque_size=CONFIG.deque_size)  # type: ignore
+
+    cur_frame = 0
+    fruits_eaten_per_episode = []
+    pbar = tqdm(total=CONFIG.max_num_episodes)
+    tot_step = 0
     for episode in range(CONFIG.max_num_episodes):
-        logging.info(
-            f"Episode {episode}/{CONFIG.max_num_episodes}. Epsilon: {epsilon:.3f}."
-        )
-        env.reset()
-        episode_reward = np.zeros(CONFIG.num_envs)
-
+        obs, info = copy.deepcopy(env.reset())
+        terminated = False
         timestep = 0
-        accumulated_loss = 0
-        while_bar = tqdm(range(CONFIG.max_steps_per_episode), desc="Run episodes")
-        while timestep < CONFIG.max_steps_per_episode:
+        frames = []
+        rewards_per_episode = []
+        n_step_per_episode = []
+        while not terminated:
             cur_frame += 1
+            tot_step += 1
+            action = snake_agent.get_action(obs, info)
+            new_obs, reward, done, selected_action, new_info = env.step(action)
+            terminated = done or (timestep > CONFIG.max_steps_per_episode)
 
-            agent = np.stack(env.get_attr("_agent_location"))
-            target = np.stack(env.get_attr("_target_location"))
-            states = np.concatenate((agent, target), axis=1)
-            bodies = list(env.get_attr("body"))
-            actions = select_epsilon_greedy_action(
-                model, 1.0, states, bodies, num_actions, CONFIG
-            )
+            #
+            rewards_per_episode.append(reward)
+            tmp_state = np.concatenate((obs["agent"], obs["target"]))
+            tmp_body = info["body"]
 
-            next_states, rewards, dones, _, new_bodies = env.step(actions)
-            next_states = np.concatenate(
-                (next_states["agent"], next_states["target"]), axis=1
-            )
-            episode_reward += rewards
-            new_bodies = list(new_bodies["body"])
-
-            if np.all(dones):
-                break
-
+            if timestep < 1002 or timestep > CONFIG.max_steps_per_episode - 502:
+                frame = snake_agent.get_image(tmp_state, tmp_body)
+                frames.append(frame)
             # Save actions and states in replay buffer
-            buffer.add_multiple(
-                states, actions, rewards, next_states, dones, bodies, new_bodies
-            )
+            buffer.add(obs, selected_action, reward, new_obs, done, info, new_info)
+
+            # Update obs and info
+            obs = copy.deepcopy(new_obs)
+            info = copy.deepcopy(new_info)
 
             cur_frame += 1
+
+            if tot_step > CONFIG.epsilon_random_frames :
+                if tot_step % CONFIG.eps_decay_frames == 0:
+                    snake_agent.decay_epsilon()
 
             # Train neural network.
             if (
@@ -399,7 +183,7 @@ def vectorized_learning(env, buffer, filename):
                     bodies,
                     new_bodies,
                 ) = buffer.sample(CONFIG.batch_size)
-                loss = vec_train_step(
+                loss = train_step(
                     states,
                     actions,
                     rewards,
@@ -407,179 +191,146 @@ def vectorized_learning(env, buffer, filename):
                     dones,
                     bodies,
                     new_bodies,
-                    discount=0.99,
+                    snake_agent,
+                    loss_function,
+                    optimizer,
+                    CONFIG.device,
                 )
-                accumulated_loss += loss.item()
+
             # Update target network every update_target_network steps.
             if cur_frame % CONFIG.update_target_network == 0:
-                model_target.load_state_dict(model.state_dict())
+                snake_agent.model_target.load_state_dict(snake_agent.model.state_dict())
 
             timestep += 1
+            # if env.eaten_fruits == 10:
+            n_step_per_episode.append(timestep)
+            #     break
+        # if episode>CONFIG.epsilon_random_frames:
+        # snake_agent.decay_epsilon()
 
-            # if timestep > CONFIG.epsilon_random_frames:
-            #     epsilon -= (
-            #         CONFIG.epsilon_max - CONFIG.epsilon_min
-            #     ) / CONFIG.epsilon_greedy_frames
-            #     epsilon = max(epsilon, CONFIG.epsilon_min)
+        fruits_eaten_per_episode.append(env.eaten_fruits)
 
-            if cur_frame > CONFIG.epsilon_random_frames:
-                epsilon -= (
-                    CONFIG.epsilon_max - CONFIG.epsilon_min
-                ) / CONFIG.epsilon_greedy_frames
-                epsilon = max(epsilon, CONFIG.epsilon_min)
-            
-            if statistics.len == 100000:
-                statistics.shift()
-            statistics.append(
-                loss=accumulated_loss / timestep, episode_reward=episode_reward
-            )
+        if ((episode + 1) % CONFIG.save_step) == 0:
+            # Save episode in a gif
+            os.makedirs(CONFIG.output_logdir + "/GIF", exist_ok=True)
+            try:
+                if timestep > 1000:
+                    output_gif = CONFIG.output_logdir + "/GIF/game_ep_{}_1.gif".format(
+                        episode
+                    )
+                    create_gif_from_plt_images(frames[0:500], output_gif, duration=200)
+                    output_gif = CONFIG.output_logdir + "/GIF/game_ep_{}_2.gif".format(
+                        episode
+                    )
+                    create_gif_from_plt_images(frames[-500:], output_gif, duration=200)
+                else:
+                    output_gif = CONFIG.output_logdir + "/GIF/game_{}.gif".format(
+                        episode
+                    )
+                    create_gif_from_plt_images(frames, output_gif, duration=200)
+            except:
+                pass
 
-            if timestep % 100000 == 0:
-                logging.info(
-                    f"Step {timestep}/{CONFIG.max_steps_per_episode}. Epsilon: {epsilon:.3f}."
-                )
-                file = json.load(open(filename))
-                file["episode_{}_step_{}".format(episode, timestep)] = {
-                    "steps": f"{timestep}/{CONFIG.max_steps_per_episode}",
-                    "epsilon": epsilon,
-                    #"total_reward": episode_reward,
-                    "reward_mean": np.mean(statistics.episode_rewards),
-                    "loss_mean": np.mean(statistics.losses),
-                    "current_time": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-                }
-                json.dump(file, open(filename, "w"), indent=4)
-
-            while_bar.update(1)
-
-
-        if episode % CONFIG.save_step == 0:
-            """print(f'Episode {episode}/{max_num_episodes}. Epsilon: {epsilon:.3f}.'
-            f' Reward in last 100 episodes: {running_reward:.2f}')"""
-            logging.info(f"\n Saving results at episode {episode}")
+            # write on file current average reward
+            metrics = {
+                "return_queue": env.return_queue,
+                "length_queue": env.length_queue,
+                "training_error": snake_agent.training_error,
+                "epsilon": snake_agent.epsilon,
+            }
             file = json.load(open(filename))
             file["episode_{}".format(episode)] = {
-                "epsilon": epsilon,
-                # "points": env.get_points(),
-                "steps": timestep,
-                # "steps_per_point": env.n_steps_per_point,
-                "reward_mean": np.mean(statistics.episode_rewards),
-                "loss_mean": np.mean(statistics.losses),
-                # "points_mean": running_points,
-                # "steps_mean": running_steps,
-                #  "elapsed_time": pbar.format_dict["elapsed"],
-                # "estimated_time": pbar.format_dict["remaining"],
-                "current_time": datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+                "training_error": str(np.mean(snake_agent.training_error)),
+                "mean_step": np.mean(n_step_per_episode),
+                "mean_eaten": np.mean(fruits_eaten_per_episode),
+                "mean_reward": np.mean(rewards_per_episode),
+                "eatens": env.eaten_fruits,
+                "epsilon": str(snake_agent.epsilon),
             }
             json.dump(file, open(filename, "w"), indent=4)
-            # Save model
-            torch.save(
-                model.state_dict(),
-                f"{CONFIG.output_checkpoint_dir}/model_{episode}.pth",
+            fruits_eaten_per_episode = []
+            os.makedirs(CONFIG.output_logdir + "/metrics", exist_ok=True)
+            with open(
+                CONFIG.output_logdir + "/metrics/metrics_{}".format(episode), "wb"
+            ) as handle:
+                pickle.dump(metrics, handle)
+            # do we want to save it every 100 episodes? dunno it's up to you
+            snake_agent.save_model(
+                CONFIG.output_checkpoint_dir + "/model_{}".format(episode),
+                optimizer=optimizer,
             )
+            # save_fig(env, snake_agent, episode)
 
         # Condition to consider the task solved
-        # e.g. to eat at least 6 consecutive food items
-        # without eating itself, considering also the moves to reach the food
-        if np.mean(statistics.episode_rewards) > 500:
+        if np.mean(env.return_queue) > 500:  # type: ignore
             print("Solved at episode {}!".format(episode))
             break
-        # pbar.update(1)
+        pbar.update(1)
+        pbar.set_description("Epsilon: {}".format(snake_agent.epsilon))
 
 
-def dqn_learning(env):
-    filename = f"{CONFIG.output_logdir}/{CONFIG.output_filename}"
-    with open(filename, "w") as f:
-        dict_json = {"configuration": CONFIG.__dict__}
-        json.dump(dict_json, f, indent=4)
-
-    epsilon = CONFIG.epsilon
-    # env.start = np.array([0, 0])
-
-    if CONFIG.num_envs == 1:
-        logging.debug(f"dqn : sequential learning")
-        buffer = SeqReplayBuffer(size=100000, device=CONFIG.device)
-        sequential_learning(env, buffer, filename)
-    else:
-        logging.debug(f"dqn : vectorized learning")
-        buffer = VecReplayBuffer(size=100000, device=CONFIG.device)
-        vectorized_learning(env, buffer, filename)
+def save_fig(env, snake_agent, episode):
+    rolling_length = 500
+    fig, axs = plt.subplots(ncols=3, figsize=(12, 5))
+    axs[0].set_title("Episode rewards")
+    # compute and assign a rolling average of the data to provide a smoother graph
+    reward_moving_average = (
+        np.convolve(
+            np.array(env.return_queue).flatten(), np.ones(rolling_length), mode="valid"
+        )
+        / rolling_length
+    )
+    axs[0].plot(range(len(reward_moving_average)), reward_moving_average)
+    axs[1].set_title("Episode lengths")
+    length_moving_average = (
+        np.convolve(
+            np.array(env.length_queue).flatten(), np.ones(rolling_length), mode="same"
+        )
+        / rolling_length
+    )
+    axs[1].plot(range(len(length_moving_average)), length_moving_average)
+    axs[2].set_title("Training Error")
+    training_error_moving_average = (
+        np.convolve(
+            np.array(snake_agent.training_error), np.ones(rolling_length), mode="same"
+        )
+        / rolling_length
+    )
+    axs[2].plot(
+        range(len(training_error_moving_average)), training_error_moving_average
+    )
+    plt.tight_layout()
+    plt.savefig(CONFIG.output_logdir + "/training_metrics_{}.png".format(episode))
 
 
 if __name__ == "__main__":
-    # read input arguments
     parser = argparse.ArgumentParser(description="Deep Q-Network Snake")
-    parser = add_parser_argument(parser, CONFIG)
+    parser.add_argument(
+        "--output_log_dir",
+        type=str,
+        default=CONFIG.output_logdir,
+        help="Output directory",
+    )
+    parser.add_argument(
+        "--output_checkpoint_dir",
+        type=str,
+        default=CONFIG.output_checkpoint_dir,
+        help="Output directory for checkpoints",
+    )
+    parser.add_argument(
+        "--load_checkpoint",
+        type=str,
+        default=CONFIG.load_checkpoint,
+        help="Load checkpoint",
+    )
     args = parser.parse_args()
 
     CONFIG = Config(
-        current_time=datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-        logging_level=logging.DEBUG if args.debug else CONFIG.logging_level,
-        env_size_x=args.Lx,
-        env_size_y=args.Ly,
-        num_envs=args.num_envs,
-        max_num_episodes=args.episodes,
-        batch_size=args.batch_size,
-        max_steps_per_episode=args.max_steps,
-        update_after_actions=args.update_after,
-        epsilon=args.epsilon,
-        epsilon_min=args.epsilon_min,
-        epsilon_max=args.epsilon_max,
-        update_target_network=args.update_target,
-        epsilon_random_frames=args.epsilon_random_frames,
-        epsilon_greedy_frames=args.epsilon_greedy_frames,
         output_logdir=args.output_log_dir,
         output_checkpoint_dir=args.output_checkpoint_dir,
-        description="Vectorized DQN:" + args.desc
-        if args.num_envs > 1
-        else "Sequential DQN:" + args.desc,
-        load_from_checkpoint=args.load_checkpoint,
-        save_step=CONFIG.save_step,
+        load_checkpoint=args.load_checkpoint,
     )
-
     logging.basicConfig(level=CONFIG.logging_level)
-    logging.info(f"Start training with configuration: {CONFIG}")
-    # make directory for checkpoints and results
     os.makedirs(CONFIG.output_logdir, exist_ok=True)
     os.makedirs(CONFIG.output_checkpoint_dir, exist_ok=True)
-
-    # initialize the environment
-    if CONFIG.num_envs == 1:  # sequential
-        env = SnakeEnv(CONFIG.env_size_x, CONFIG.env_size_y)
-        num_actions = env.num_actions
-        input_size = env.Lx
-    else:  # vectorized
-        env = gym.vector.AsyncVectorEnv(
-            [
-                lambda: GymSnakeEnv(size=(CONFIG.env_size_x, CONFIG.env_size_y))
-                for _ in range(CONFIG.num_envs)
-            ],
-            context="fork",
-        )
-        num_actions = env.single_action_space.n  # type: ignore
-        input_size = env.single_observation_space.spaces["agent"].high[0]  # type: ignore
-
-    model = DQN(in_channels=1, num_actions=num_actions, input_size=input_size)
-    model_target = DQN(in_channels=1, num_actions=num_actions, input_size=input_size)
-
-    if CONFIG.load_from_checkpoint is not None:
-        file_path = os.path.join(
-            CONFIG.output_checkpoint_dir, CONFIG.load_from_checkpoint
-        )
-        model.load_state_dict(torch.load(file_path))
-        model_target.load_state_dict(torch.load(file_path))
-        logging.info(f"Loaded model from {file_path}")
-
-    logging.debug(f"main, dqn_script: CONFIG.device: {CONFIG.device}")
-
-    model = model.to(CONFIG.device)
-    model_target = model_target.to(CONFIG.device)
-    logging.debug(
-        f"main, dqn_script: model.device: {model.device()}, model_target.device: {model_target.device()}"
-    )
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00025)
-    loss_function = nn.HuberLoss()
-
-    action_space = np.arange(num_actions)
-
-    dqn_learning(env)
+    dqn_learning(CONFIG)

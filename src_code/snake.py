@@ -4,8 +4,8 @@ import random
 import sys
 import pickle
 from qlearning import *
-from qnetworks import *
-from deep_qnetworks import *
+from src_code.qnetworks import *
+from src_code.cnn.agent import DQN
 import torch
 
 
