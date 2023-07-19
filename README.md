@@ -3,6 +3,8 @@
 ![License MIT](https://img.shields.io/github/license/erikalena/Deep-QNetworks?style=for-the-badge) 
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
+
+![](game/captures/mlp_70000.gif)
 ## Purpose of the project
 
 The aim of the project was to implement Deep QNetworks, following the description contained in [Playing Atari with Deep Reinforcement Learning](https://arxiv.org/abs/1312.5602) and in particular to exploit it to make an agent learn how to play Snake game.
@@ -70,8 +72,6 @@ where:
 In the results folder, a `log.json` file is created with all the configuration of the network and the hyperparameters used. It's also save statistics of the training each `<save-step-per-episode>` The checkpoints are saved in the `checkpoints` folder.
 A folder `GIF` is also created, where the GIFs of the first and last 500 step of an episode are saved.
 
-### GYM 
-
 ### Results
 
 See how the model behaves:
@@ -79,4 +79,3 @@ See how the model behaves:
 - after ~ 70000 episodes
 
   
-![](game/captures/mlp_70000.gif)
