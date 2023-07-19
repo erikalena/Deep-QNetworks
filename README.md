@@ -27,7 +27,13 @@ An already trained version is available for both the models, but new versions ca
 
 ### How to train MLP
 
+Move in *mlp* directory and run the script, the results will be saved in the same directory, so that the training can be resumed after it terminates. 
+In results file, the configuration of the network, along with all hyperparameters will be saved. Extra care is needed to properly tune all of these along with positive and negative rewards.
 
+```bash
+cd src_code/mlp
+python train_mlp.py
+```
 
 ### How to train CNN
 
