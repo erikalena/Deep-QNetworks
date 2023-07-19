@@ -4,8 +4,6 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
 
-![](game/captures/mlp_70000.gif)
-![](game/captures/cnn_40000.gif)
 
 ## Purpose of the project
 
@@ -80,8 +78,12 @@ A folder `GIF` is also created, where the GIFs of the first and last 500 step of
 See how the model behaves:
 
 - MLP after ~ 70000 episodes
+  
+![](game/captures/mlp_70000.gif)
 
+<br>
 
 - CNN after ~ 40000 episodes
-- 
+  
+![](game/captures/cnn_40000.gif)
   
