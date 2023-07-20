@@ -86,4 +86,12 @@ See how the model behaves:
 - CNN after ~ 40000 episodes
   
 ![](game/captures/cnn_40000.gif)
-  
+
+## GYM enviroment
+We created a custom enviroment using the Gymnasium API and the documentation website can be found at [gymnasium farama](https://gymnasium.farama.org/) the main methods provided are: 
+- `step()`  Updates an environment with actions returning the next agent observation, the reward for taking that actions, if the environment has terminated or truncated due to the latest action and information from the environment about the step, i.e. metrics, debug info.
+- `reset()` - Resets the environment to an initial state, required before calling step. Returns the first agent observation for an episode and information, i.e. metrics, debug info.
+
+- `render()` - Renders the environments to help visualise what the agent see, examples modes are “human”, “rgb_array”, “ansi” for text.
+
+You can also using wrapper to extend the functionalities of already existing envs, in the project we used `gymnasium.wrappers.RecordEpisodeStatistics()` to records performance metrics
