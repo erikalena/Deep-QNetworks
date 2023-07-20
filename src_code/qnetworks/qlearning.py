@@ -3,6 +3,7 @@ import matplotlib
 import numpy as np
 from tqdm import tqdm
 import pickle
+import copy
 
 plt.rcParams['figure.figsize'] = [10, 7]
 plt.rcParams['figure.dpi'] = 100 
@@ -40,12 +41,15 @@ class GridWorldEnv():
 
         self.gamma = 1.0
         self.lr = 0.15
+        self.lr_0 = copy.deepcopy(self.lr)
 
-        self.epsilon = 0.4
+        self.epsilon = 0.6
+        self.epsilon_0 = copy.deepcopy(self.epsilon)
+
         #Actions = [Down,   Up,  Right,Left] 
         self.actions = np.array([[1,0],[-1,0],[0,1],[0,-1]])
 
-        self.n_episodes = 3000
+        self.n_episodes = 1000
     
     def new_instance(self, Lx, Ly, goal, rewards):
         World = np.zeros((Ly,Lx))
@@ -92,9 +96,9 @@ class GridWorldEnv():
             
         return S_new, reward, self.done
 
-    def learn_policies(self, save=True):
+    def learn_policy(self, save=True):
         """
-        Learn final policies running QLearning algorithm for
+        Learn final policy running QLearning algorithm for
         a suitable number of episodes
         """
         
@@ -115,6 +119,7 @@ class GridWorldEnv():
 
                 # save number of steps necessary to complete an episode
                 n_steps = np.zeros(self.n_episodes)
+                greedy_steps = 200
 
                 for e in range(self.n_episodes):
                     done = False
@@ -133,7 +138,7 @@ class GridWorldEnv():
                                                     
                         # Choose new action index
                         new_a = QLearning.get_action_epsilon_greedy(new_s, self.epsilon)
-                        #print(s,act,a, r,new_s,new_a, done, ' Qvalue ', SARSA.Qvalues[(*s,)])
+
                         # (Corresponding action to index)
                         act = self.actions[new_a]
                         # Single update with (S, A, R', S')
@@ -143,13 +148,20 @@ class GridWorldEnv():
                         s = new_s
                         n_steps[e] += 1
 
+                        if n_steps[e] > greedy_steps:
+                            # update learning rate
+                            self.lr_v = self.lr_0/(1 + 0.003*(n_steps[e] - greedy_steps)**0.75)
+                            # update epsilon
+                            self.epsilon = self.epsilon_0/(1. + 0.005*(n_steps[e] - greedy_steps)**1.05)
+
                 self.policy[:,:,i*self.Ly+j] = QLearning.greedy_policy().astype(int)    
 
                 for m in range(self.Ly):
                     for l in range(self.Lx):
                         self.values[m,l,i*self.Ly+j] = QLearning.Qvalues[m,l,self.policy[m,l,i*self.Ly+j].astype(int)]        
             
-            print('Policy for initial state [*,{}] and final state is saved'.format(i))
+            
+            print("Policy for goal in position ({},*) learned".format(i))
 
         # save the policy and values in pickle file
         if save:
@@ -195,9 +207,8 @@ class GridWorldEnv():
                                             
                 # Choose new action index
                 new_a = qlearn.get_action_epsilon_greedy(new_s, self.epsilon)
-                #print(s,act,a, r,new_s,new_a, done, ' Qvalue ', SARSA.Qvalues[(*s,)])
-                # (Corresponding action to index)
                 act = self.actions[new_a]
+
                 # Single update with (S, A, R', S')
                 qlearn.single_step_update(s, a, r, new_s, done)
                 
@@ -301,7 +312,7 @@ class Qlearning_TDControl():
         # where to save returns
         self.Qvalues = np.zeros( (*self.space_size, self.action_size) )
     
-    # -------------------   
+    
     def single_step_update(self, s, a, r, new_s, done):
         """
         Uses a single step to update the values, using Temporal Difference for Q values.
@@ -318,7 +329,6 @@ class Qlearning_TDControl():
         
         self.Qvalues[ (*s, a) ] += self.lr_v * deltaQ
             
-    # ---------------------
     def get_action_epsilon_greedy(self, s, eps):
         """
         Chooses action at random using an epsilon-greedy policy wrt the current Q(s,a).
