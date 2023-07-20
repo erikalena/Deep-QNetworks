@@ -61,15 +61,17 @@ def main_loop(env, config):
         
         while not done and n_steps[episode] < max_steps_per_episode:
             
-            action = select_epsilon_greedy_action(model, state, body, epsilon, config)
+            action = select_epsilon_greedy_action(copy.deepcopy(state), copy.deepcopy(body), epsilon, config)
             
-            next_state, new_body, reward, done = env.step(state, action, body)
+            next_state, new_body, reward, done = env.step(copy.deepcopy(state), action, copy.deepcopy(body))
             ep_reward += reward
-            
+       
 
             # Save to experience replay.
             buffer.add(state, body, action, reward, next_state, new_body, done)
-            state = next_state
+            state = copy.deepcopy(next_state)
+            body = copy.deepcopy(new_body)
+
             cur_frame += 1
         
             # Train neural network.
