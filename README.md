@@ -83,7 +83,7 @@ See how the model behaves:
 
 <br>
 
-- CNN after ~ 40000 episodes
+- CNN after ~ 20000 episodes
   
 ![](game/captures/cnn_40000.gif)
 
