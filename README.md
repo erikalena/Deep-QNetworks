@@ -4,8 +4,6 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 ![NumPy](https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white)
 
-![](game/captures/mlp_70000.gif)
-![](game/captures/cnn_40000.gif)
 
 ## Purpose of the project
 
@@ -80,8 +78,20 @@ A folder `GIF` is also created, where the GIFs of the first and last 500 step of
 See how the model behaves:
 
 - MLP after ~ 70000 episodes
+  
+![](game/captures/mlp_70000.gif)
 
+<br>
 
 - CNN after ~ 40000 episodes
-- 
   
+![](game/captures/cnn_40000.gif)
+
+## GYM enviroment
+We created a custom enviroment using the Gymnasium API and the documentation website can be found at [gymnasium farama](https://gymnasium.farama.org/) the main methods provided are: 
+- `step()`  Updates an environment with actions returning the next agent observation, the reward for taking that actions, if the environment has terminated or truncated due to the latest action and information from the environment about the step, i.e. metrics, debug info.
+- `reset()` - Resets the environment to an initial state, required before calling step. Returns the first agent observation for an episode and information, i.e. metrics, debug info.
+
+- `render()` - Renders the environments to help visualise what the agent see, examples modes are “human”, “rgb_array”, “ansi” for text.
+
+You can also using wrapper to extend the functionalities of already existing envs, in the project we used `gymnasium.wrappers.RecordEpisodeStatistics()` to records performance metrics
